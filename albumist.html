@@ -75,10 +75,10 @@
 	-->
 	<div id="discography">	
 	</div>
-	
+		
 	<script type="text/javascript" src="albumist.js"> </script>
 	<script type="text/javascript">
-		
+				
 		// You can use the default settings of albumist and it will run.
 		// But probably won't be the results you like.
 		var config = new Albumist.Config;
@@ -97,10 +97,25 @@
 		
 		// IDs or GUIDs of albums to omit.  This can be useful especially if
 		// Freebase administrators are being a little slow to merge or 
-		// delete albums that are spam or redundant copies.
+		// delete albums that are spam or redundant copies.  
+		//
+		// (For instance, if no merge has happened between the MusicBrainz-
+		// derived Freebase topic and a Wikipedia-derived Freebase topic, you
+		// might have two copies of an album showing.  The best thing to do is
+		// to flag the topics for merge, then go to the one with the track
+		// information and make sure it has cover art.  Add the ID or GUID of
+		// the lesser article to this list.  You can remove it when the
+		// Freebase administrators have done the merge, but there is no harm
+		// to leaving it in.)
 		config.omitAlbums = [
-			{id: "/guid/9202a8c04000641f8000000005b47797"},
-			{guid: "#9202a8c04000641f8000000005b47c04"}
+			// "The Crushed Velvet Apocalypse" Wikipedia-derived entry
+			{
+				guid: "#9202a8c04000641f8000000004832f14"
+			},
+			// "The Maria Dimension" Wikipedia-derived entry
+			{
+				id: "/guid/9202a8c04000641f8000000004832fda"
+			}
 		];
 		
 		// Terribly simple implementation of a "Buy" link.  Though Albumist is
@@ -110,6 +125,7 @@
 		// ID in freebase (that starts with "/guid" with an actual guid, which
 		// starts with a pound sign and is followed by digits and letters.)
 		config.buyAlbums = [
+			// Plutonium Blonde is avaiable for pre-order
 			{
 				id: "/guid/9202a8c04000641f8000000008e627d0",
 				price: "15 EUR",

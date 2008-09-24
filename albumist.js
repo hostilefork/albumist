@@ -71,18 +71,18 @@ be revisited in the future.
 */
 
 /*
-Note3: I wrestled with a bug kind of like this in IE for a long period of time
-that went away at some point and I don't know why.  It just stopped happening,
-around the time I changed some of the API calls to use Mootools instead of the
-DOM:
+Note3: Something happened somewhere along the way and the script stopped 
+working in Internet Explorer with an "operation aborted" error.  This bug 
+seems to come and go and be sensitive to changes in the code that I don't 
+quite understand.  The most common cause is code that manipulates a div
+that is not yet closed:
 
 	http://clientside.cnet.com/code-snippets/manipulating-the-dom/ie-and-operation-aborted/
 	http://support.microsoft.com/default.aspx/kb/927917
 
-The bug I saw had the same error message but NOT the same apparent cause (I did
-not have the conditions they describe in the knowledge base).  As it is a
-"Heisenbug" I'd like to keep it on the radar for anyone manipulating this 
-code until the cause is truly understood.
+As far as I can tell, this is not what is going on.  In any case, it was
+at one point running in IE so perhaps it will again soon.  For the moment,
+it "alert()"s the user to use a different browser.
 */
 
 /*
@@ -934,9 +934,9 @@ var Metaweb = {};
 						getEditUrlForLyricWiki(bandName, track, config) + 
 						'" target="_blank">' + (html ? 'Edit on LyricWiki' : 'Add to LyricWiki') + '</a><br />';
 					if (html) {
-						content.setHTML('<p>' + editLyricsHtml + freebaseHtml + '</p><br />' + '<p>' + html + '</p>');
+						content.setHTML('<div class="no_margin">' + editLyricsHtml + freebaseHtml + '</div><br />' + '<div class="no_margin">' + html + '</p><br />');
 					} else {
-						content.setHTML('<p>' + editLyricsHtml + freebaseHtml + '</p><br />' + '<p><i>This song is not on LyricWiki yet, at least not under the URL ' + getViewUrlForLyricWiki(bandName, track, config) + '<br />You can <a href="http://lyricwiki.org/Special:Search" target="_blank">Search LyricWiki</a> to see if it is there under a different name, and either change the track name in Freebase or in LyricWiki to match.  If not, you can add it yourself under this name.</i></p>');
+						content.setHTML('<div class="no_margin">' + editLyricsHtml + freebaseHtml + '</div><br />' + '<div class="no_margin"><i>This song is not on LyricWiki yet, at least not under the URL ' + getViewUrlForLyricWiki(bandName, track, config) + '<br />You can <a href="http://lyricwiki.org/Special:Search" target="_blank">Search LyricWiki</a> to see if it is there under a different name, and either change the track name in Freebase or in LyricWiki to match.  If not, you can add it yourself under this name.</i></div><br />');
 					}
 					collapsible.toggle();
 					if(span){
@@ -1002,7 +1002,7 @@ var Metaweb = {};
 				
 				var imageEl = new Element("img", {src: imageURL});
 				imageEl.inject(containerEl);
-				var linksEl = new Element("p");
+				var linksEl = new Element("div", {className: "no_margin"});
 				var freebaseHtml = '<img src="' + config.basePath + 'freebase.png"> <a href="http://freebase.com/view' + result.id + '" target="_blank">Visit Album Page on Freebase</a><br />';
 				var buyObject = Metaweb.matchEntryByFreebaseIdOrGuid(result, config.buyAlbums);
 				var buyHtml = buyObject ? '<a href="' + buyObject.link + '" target="_blank">Buy it now for ' + buyObject.price + '</a><br />' : "";
@@ -1048,7 +1048,7 @@ var Metaweb = {};
 					headings[i] = headerEl;
 				}
 				
-				var noticeMissingEl = new Element("p");
+				var noticeMissingEl = new Element("div", {className: "no_margin"});
 				noticeMissingEl.setHTML('<hr><i>Is this information incomplete, or incorrect?<br />You can visit Freebase and easily edit tracks and cover art.<br />Then reload this page and you will have the option to add lyrics as well!</i>');
 				noticeMissingEl.inject(containerEl);
 				
@@ -1101,6 +1101,7 @@ var Metaweb = {};
 	// table from the results
 	// Derived from: http://www.freebase.com/view/guid/9202a8c04000641f800000000544e139#fig-albumlist2
 	function displayCore(element, bandId, bandName, configParam) {
+
 		var config;
 		if (!configParam) {
 			config = new Albumist.Config();
@@ -1130,8 +1131,14 @@ var Metaweb = {};
 		// Find the document elements we need to insert content into 
 		var albumlist = document.getElementById(element);
 		var loadingEl = new Element("p");
-		loadingEl.setHTML("<b><i>Loading...</i></b>");
 		loadingEl.injectInside(albumlist); // Album list is coming... */
+		if (userRunningIE()) {
+			alert('Sorry, Internet Explorer is currently not supported for browsing the discography and lyrics database.  We are working on it!  In the meantime, please consider using Chrome, Firefox, or Safari.');
+			return;	
+		} else {
+			loadingEl.setHTML("<b><i>Loading...</i></b>");
+		}
+
 		
 		var query = {					  // This is our MQL query 
 			type: "/music/artist",		 // Find a band

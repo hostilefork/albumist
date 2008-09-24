@@ -75,6 +75,6 @@ more capable with making web pages than The Fork.
 */
 
 ul.simple, ul.simple li{ list-style:  none outside; padding: 0; }
-p { margin: 0px; }
+div#no_margin { margin: 0px; }
 div.collapse{ height: 100%; margin: 0px; }	
 div.collapse-container{ height: 100%; margin-left: 20px; }
