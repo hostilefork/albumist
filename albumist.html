@@ -1,0 +1,189 @@
+<html>
+	<!--
+	Sample HTML demonstrating how to invoke the Albumist discography script
+	Original codebase assembled by tech blogger "Hostile Fork"
+	Read more about it at http://hostilefork.com/albumist
+	Distributed under the Creative Commons Attribution License 3.0
+	
+	Albumist was written to work with The Legendary Pink Dots' new website,
+	with the goal of helping fans get involved in managing their prolific
+	discography.  Please check out their music: 
+		
+			http://legendarypinkdots.org/music
+			
+	...and see them on their 2008 tour!
+	-->
+	
+	<!--
+	(Note: Don't be afraid of the length of this file.  Albumist is very easy
+	to use in your webpage.  It "works" with as little code as:
+		
+		<div id="discography">	
+		</div>
+		<script type="text/javascript" src="albumist.js"> </script>
+		<script type="text/javascript">
+		Albumist.displayByBandName("discography", "The Legendary Pink Dots");
+		</script>
+	
+	But this is just some rather thorough "living" documentation of all the
+	configuration options.  Hence the length.  It is my hope that Albumist
+	will become even more flexible in the future, so there will be even 
+	more options!
+	-->
+	
+	<head>
+		<!--		
+		Because The Dots' site uses the Joomla! content management system, it
+		was fairly obvious we'd be using mootools as the JavaScript library.
+		The only version thta has been tested is with mootools 1.11, because
+		that is what Joomla! 1.5 shipped with.
+		
+		If you are using Joomla 1.5 then you are in luck.  But you are probably
+		not, so you'll have to figure out whether a manual inclusion of
+		mootools 1.11 is appropriate for your project.  It hasn't been tested
+		with other versions, and I don't currently know enough about what is a
+		compatible subset of the library to change it for 1.2 or later.
+		-->
+		<script type="text/javascript" src="mootools.js"></script>
+		
+		<!-- 
+		Web standards say scripts can appear anywhere, but CSS stylesheets
+		only in the <head></head>!  Albumist can inject its css into the
+		head of your page when it runs, which is the default.  Or you can put
+		it in the header yourself and suppress the injection by setting
+		injectCSS to false.  For this demo we will do the latter.
+		-->
+		<link rel="stylesheet" type="text/css" href="albumist.css">
+		<!--
+		(Note: The code doesn't use CSS effectively right now.  So if you are
+		good at that sort of thing and all that margin/padding stuff doesn't
+		make you want to put a rock through your monitor, then your help in
+		improving it would be appreciated!)
+		-->
+				
+	</head>
+	<body><center><!-- style="text-align: center" doesn't center the div -->
+	
+	<h2>Albums by The Legendary Pink Dots</h2>
+	
+	<!-- 
+	This is the placeholder, which is where albumist will place the table of
+	albums in the page.  Because you pass the ID of the placeholder to the
+	albumist script, it is possible to put several discographies on the
+	same page.  This may become more useful as albumist gets features to
+	help subselect major and minor releases.
+	-->
+	<div id="discography">	
+	</div>
+	
+	<script type="text/javascript" src="albumist.js"> </script>
+	<script type="text/javascript">
+		
+		// You can use the default settings of albumist and it will run.
+		// But probably won't be the results you like.
+		var config = new Albumist.Config;
+		
+		// Size of the album thumbnails in the whole page grid
+		config.thumbEdgeSize = 100;
+		
+		// Size of the covers once a single album is selected for opening
+		config.coverEdgeSize = 300;
+	
+		// Number of albums per row in the table
+		config.albumsPerRow = 4;
+		
+		// Overall width of table on the page
+		config.tableWidth = 510;
+		
+		// IDs or GUIDs of albums to omit.  This can be useful especially if
+		// Freebase administrators are being a little slow to merge or 
+		// delete albums that are spam or redundant copies.
+		config.omitAlbums = [
+			{id: "/guid/9202a8c04000641f8000000005b47797"},
+			{guid: "#9202a8c04000641f8000000005b47c04"}
+		];
+		
+		// Terribly simple implementation of a "Buy" link.  Though Albumist is
+		// not a store, I thought it would be nice to let artists supply a
+		// link where the albums could be bought direct from them.  Again,
+		// you may specify either an ID or a GUID.  Don't confuse an guid-based
+		// ID in freebase (that starts with "/guid" with an actual guid, which
+		// starts with a pound sign and is followed by digits and letters.)
+		config.buyAlbums = [
+			{
+				id: "/guid/9202a8c04000641f8000000008e627d0",
+				price: "15 EUR",
+				link: "http://www.legendarypinkdots.org/component/content/article/28-merchandise/1253-pre-order-plutonium-blonde"
+			}
+		];
+		
+		// Lyric Wiki Policy on names is to capitalize the 
+		// first letter of each song or band with the rest lowercase, and 
+		// turn spaces into underscores:
+		//
+		//	http://lyricwiki.org/LyricWiki:Page_names
+		//
+		// So Albumist will guess at the name by trying to apply those rules to
+		// the names as they appear on Freebase.  However, there are exceptions
+		// to the rule everywhere.  For instance "The Legendary Pink Dots" are
+		// just "Legendary_Pink_Dots" on LyricWiki.  Until Freebase has a way
+		// for us to point out the exceptions in the names, you must either
+		// edit Freebase or LyricWiki to make them match up.  
+		//
+		// Often that isn't appropriate for some reason (such as that it would
+		// not be appropriate to turn "ABBA" on LyricWiki into "Abba", and
+		// they'd probably also frown on breaking all the links to 
+		// "Legendary_Pink_Dots" by renaming them to "The_Legendary_Pink_Dots"
+		// just to make this Album script happier).  So in cases like that,
+		// the following configuration settings let you override the names
+		// Albumist uses when it looks up lyrics and bands.
+		//
+		// Notice that by design, Albumist does not try to find the album pages
+		// on LyricsWiki.  Freebase is simply the better place for tracking and
+		// tagging information about tracks.  It is a database and not a 
+		// textual wiki, plus it is synchronized with MusicBrainz!
+		config.bandNameOnLyricWiki = "Legendary_Pink_Dots";
+		config.trackNamesOnLyricWiki = [
+			{
+				id: "/guid/9202a8c04000641f8000000001bc694a",
+				name: "Paris,_4AM" // Albumist would have guessed "Paris, 4am"
+			}
+		];
+		
+		// IE behaves differently based on the DOCTYPE in the header.  So if
+		// you do not have a DOCTYPE (such as in this example) you can tell
+		// Albumist to try and hack around it.  Very experimental setting,
+		// and it actually does more harm than good to encourage people to
+		// stick with wacky browsers.
+		config.hacksForNonstandardIE = true;
+		
+		// As discussed earlier, you can tell Albumist NOT to inject the 
+		// albumist.css file into the header.  If you're on a system where you
+		// don't control the header easily...then just let Albumist do the
+		// default injection.  In our case we are turning it off.
+		config.injectCss = false;
+		
+		// You can tell albumist where you put the CSS file and icons and such
+		// but if they're all in the current directory then you don't need to.
+		// Note that it should end with a slash.
+		/* config.basePath = "http://legendarypinkdots.org/albumist/";  */
+		
+		// Now for the code that does the work!
+		Albumist.displayByFreebaseId(
+			"discography", // ID of the placeholder div to put nodes under
+			"/en/the_legendary_pink_dots", // Freebase ID of the band
+			config // The config object, or null if you don't care
+		);
+		
+		// Note that you could also use the band's name instead of the
+		// Freebase ID, but this might end up ambiguous if another musical
+		// artist shows up... with some name like "Pink Floyd vs The Legendary
+		// Pink Dots" for instance.
+		/* Albumist.displayByBandName(
+			"discography", // ID of the placeholder div to put nodes under
+			"The Legendary Pink Dots", // Freebase ID of the band
+			config); // The config object, or null if you don't care */
+		
+		</script>
+	</center></body>
+</html>
