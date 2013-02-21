@@ -315,8 +315,8 @@ var Metaweb = {};
 	 **/
 	
 	(function () {
-		Metaweb.HOST = "http://www.freebase.com";	   // The Metaweb server
-		Metaweb.QUERY_SERVICE = "/api/service/mqlread"; // The service on that server
+		Metaweb.HOST = "https://www.googleapis.com";	   // The Metaweb server
+		Metaweb.QUERY_SERVICE = "/freebase/v1/mqlread"; // The service on that server
 		Metaweb.counter = 0;							// For unique function names
 		
 		// Send query q to Metaweb, and pass the result asynchronously to function f
@@ -331,30 +331,27 @@ var Metaweb = {};
 			// If the query fails, this function throws an exception.  Since it
 			// is invoked asynchronously, we can't catch the exception, but it serves
 			// to report the error to the JavaScript console.
-			Metaweb[callbackName] = function(outerEnvelope) {
-				var innerEnvelope = outerEnvelope.qname;		 // Open outer envelope
-				// Make sure the query was successful.
-				if (innerEnvelope.code.indexOf("/api/status/ok") !== 0) {  // Check for errors
-				  var error = innerEnvelope.messages[0];		  // Get error message
-				  throw error.code + ": " + error.message;	  // And throw it!
-				}
-				var result = innerEnvelope.result;   // Get result from inner envelope
+			Metaweb[callbackName] = function(myEnvelope) {
+                // console.log(myEnvelope.result);
+				// XXX TODO: Make sure the query was successful.
+                if (myEnvelope.error) {
+                    console.log("Problem with result: " + myEnvelope.error.message);
+                }
+				var result = myEnvelope.result;   // Get result from inner envelope
 				var foo = script;
 				document.body.removeChild(script);   // Clean up <script> tag
 				delete Metaweb[callbackName];		// Delete this function
 				f(result);						   // Pass result to user function
 			};
 		
-			// Put the query in inner and outer envelopes
-			// NOTE: Original source made this global, that seems unnecessary
-			var envelope = {qname: {query: q}};
+            // console.log(JSON.serialize(q));
 		
 			// Serialize and encode the query object
-			var querytext = encodeURIComponent(JSON.serialize(envelope));
+			var querytext = encodeURIComponent(JSON.serialize(q));
 		
 			// Build the URL using encoded query text and the callback name
 			var url = Metaweb.HOST + Metaweb.QUERY_SERVICE +  
-				"?queries=" + querytext + "&callback=Metaweb." + callbackName;
+				"?query=" + querytext + "&callback=Metaweb." + callbackName;
 		
 			// Create a script tag, set its src attribute and add it to the document
 			// This triggers the HTTP request and submits the query
@@ -974,20 +971,13 @@ var Metaweb = {};
 			name: null,
 			release_date: null,
 			artist: null,
-			// Get track names and lengths, sorted by index
-			track: [{
-				name: null,
-				id: null,
-				guid: null, 
-				length: null, 
-				index: null, 
-				sort: "index",
-				"optional" : true
-			}]
+            releases: [{ release_date: null, track_list: [{ name: null, track_number: null, length: null }] }],
 		};
 		
 		var processTracklistResult = function(result) {
-			if (result && result.track) {
+			if (result && result.releases) {
+                var release = result.releases[0];
+                var track_list = release.track_list;
 				
 				var imageURL;
 				if (cache[id].coverId) { 
@@ -1019,7 +1009,7 @@ var Metaweb = {};
 
 				// Create HTML elements to display the album name and year.				
 				var albumTitleEl = new Element("h2");
-				var year = Metaweb.getYear(result.release_date);
+				var year = Metaweb.getYear(release.release_date);
 				var text = result.name + (year?(" ["+year+"]"):""); // name+year
 				albumTitleEl.setHTML(text /*+ '<a id="expand-all" href="#" title="Expand all">expand all</a> | <a id="collapse-all" href="#" title="Collapse all">collapse all</a>'*/);
 				albumTitleEl.inject(headingEl);
@@ -1031,11 +1021,11 @@ var Metaweb = {};
 				var headings = [];
 				
 				// Build an array of track names + lengths
-				for(var i = 0; i < result.track.length; i++) {
+				for(var i = 0; i < track_list.length; i++) {
 					var listItemEl = new Element("li");
 					var headerEl = new Element("h3");
 					headerEl.inject(listItemEl);
-					var html = '[<a href="#"><span>+</span></a>] ' + (i + 1) + ". " + result.track[i].name + " (" + Metaweb.toMinutesAndSeconds(result.track[i].length)+")";
+					var html = '[<a href="#"><span>+</span></a>] ' + (i + 1) + ". " + track_list[i].name + " (" + Metaweb.toMinutesAndSeconds(track_list[i].length)+")";
 					headerEl.setHTML(html);
 					
 					var collapseEl = new Element("div", {className: "collapse"});
@@ -1044,7 +1034,7 @@ var Metaweb = {};
 					collapseEl.inject(listItemEl);
 					listItemEl.inject(listEl);
 					
-					collapsibles[i] = initializeCollapsibleItem(headerEl, collapseEl, collapseContainerEl, result.artist, result.track[i], config);
+					collapsibles[i] = initializeCollapsibleItem(headerEl, collapseEl, collapseContainerEl, result.artist, track_list[i], config);
 					headings[i] = headerEl;
 				}
 				
