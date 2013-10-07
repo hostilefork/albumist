@@ -9,7 +9,7 @@ Freebase and LyricsWiki.  It's rough and cobbled together from these
 sources:
 
 	http://www.json.org/json.js
-	http://www.freebase.com/view/mid/9202a8c04000641f800000000544e139#fig-albumlist2
+	http://www.freebase.com/view/guid/9202a8c04000641f800000000544e139#fig-albumlist2
 	http://mootools.net/
 	http://www.e-magine.ro/web-dev-and-design/36/moodalbox/
 	  ( itself derived from http://www.digitalia.be/software/slimbox )
@@ -364,7 +364,7 @@ var Metaweb = {};
 	 **/
 	 
 		// A utility function to return the year portion Metaweb /type/datetime
-		// From: http://www.freebase.com/view/mid/9202a8c04000641f800000000544e139#fig-albumlist2
+		// From: http://www.freebase.com/view/guid/9202a8c04000641f800000000544e139#fig-albumlist2
 		Metaweb.getYear = function(date) {
 			if (!date) {
 				return null;
@@ -380,7 +380,7 @@ var Metaweb = {};
 	
 		// Freebase stores track length times in seconds
 		// This utility gives us Minutes and Seconds
-		// From: http://www.freebase.com/view/mid/9202a8c04000641f800000000544e139#fig-albumlist2		
+		// From: http://www.freebase.com/view/guid/9202a8c04000641f800000000544e139#fig-albumlist2		
 		Metaweb.toMinutesAndSeconds = function(totalSeconds) {
 			var minutes = Math.floor(totalSeconds/60);
 			var seconds = Math.floor(totalSeconds-(minutes*60));
@@ -391,19 +391,25 @@ var Metaweb = {};
 		};
 
 	 	// Helper function for matching arrays the user has specified which are 
-	 	// supposed to specify objects for certain Freebase ids or mids
-		Metaweb.matchEntryByFreebaseIdOrMid = function(result, entryList) {
+	 	// supposed to specify objects for certain Freebase ids or guids
+		Metaweb.matchEntryByFreebaseIdOrGuid = function(result, entryList) {
 			if (!entryList) {
 				return null;
 			}
 			for (var entryIndex = 0; entryIndex < entryList.length; entryIndex++) {
-				if (!result.mid && !result.id) {
-					alert("Freebase ID or MID required in query for MatchEntryByFreebaseIdOrMid");
+/*				if (!result.guid) {
+					alert("GUID required in query for MatchEntryByFreebaseIdOrGuid");
+				}*/
+				if (!result.id) {
+					alert("Freebase ID required in query for MatchEntryByFreebaseIdOrGuid");
 				}
 				var entry = entryList[entryIndex];
-				if ((entry.id && (entry.id == result.id)) || (entry.mid && (entry.mid == result.mid))) {
+				if (entry.id && (entry.id == result.id)) {
 					return entry;
 				}
+/*				if (entry.guid && (entry.guid == result.guid)) {
+					return entry;
+				}*/
 			} 
 			return null;
 		};
@@ -802,7 +808,7 @@ var Metaweb = {};
 		// in other browsers, and the notations are supposed to be 
 		// equivalent.  I think it is a bug in Firefox.
 		var propertyString = "trackNamesOnLyricWiki"; // to keep JSlint from complaining
-		var trackObject = Metaweb.matchEntryByFreebaseIdOrMid(track, config[propertyString]);
+		var trackObject = Metaweb.matchEntryByFreebaseIdOrGuid(track, config[propertyString]);
 		if (trackObject) {
 			return trackObject.name;
 		}
@@ -1006,7 +1012,7 @@ var Metaweb = {};
 		var query = {
 			type: "/music/album",
 			id: id,
-			mid: null, // machine ID (basically like a GUID)
+			guid: null,
 			name: null,
 			release_date: null,
 			artist: null,
@@ -1056,7 +1062,7 @@ var Metaweb = {};
 						'Visit Album Page on Freebase' +
 					'</a><br />'
 				);
-				var buyObject = Metaweb.matchEntryByFreebaseIdOrMid(result, config.buyAlbums);
+				var buyObject = Metaweb.matchEntryByFreebaseIdOrGuid(result, config.buyAlbums);
 				var buyHtml = buyObject ? '<a href="' + buyObject.link + '" target="_blank">Buy it now for ' + buyObject.price + '</a><br />' : "";
 				linksEl.setHTML(freebaseHtml + buyHtml);
 				linksEl.inject(containerEl);
@@ -1139,7 +1145,7 @@ var Metaweb = {};
 	// Main Display Routine
 	// Calls Freebase to get the album list, and then a callback function builds the
 	// table from the results
-	// Derived from: http://www.freebase.com/view/mid/9202a8c04000641f800000000544e139#fig-albumlist2
+	// Derived from: http://www.freebase.com/view/guid/9202a8c04000641f800000000544e139#fig-albumlist2
 	function displayCore(element, bandId, bandName, configParam) {
 
 		var config;
@@ -1196,7 +1202,7 @@ var Metaweb = {};
 				}],
 				
 				id: null,
-				mid: null,
+				guid: null,
 				name: null, // Return album names
 				release_date: null, // And release dates
 				sort: "-release_date" // Order by release date, minus reverses the sort (newest first)
@@ -1256,7 +1262,7 @@ var Metaweb = {};
 			for(var rawAlbumIndex = 0; rawAlbumIndex < albums.length; rawAlbumIndex++) {
 				var album = albums[rawAlbumIndex];
 
-				if (Metaweb.matchEntryByFreebaseIdOrMid(album, config.omitAlbums)) {
+				if (Metaweb.matchEntryByFreebaseIdOrGuid(album, config.omitAlbums)) {
 					continue;
 				}
 				
@@ -1342,7 +1348,7 @@ var Metaweb = {};
 				
 				setOnClickFunctionString(titleLink, functionString);
 				
-				var buyInfo = Metaweb.matchEntryByFreebaseIdOrMid(album, config.buyAlbums);
+				var buyInfo = Metaweb.matchEntryByFreebaseIdOrGuid(album, config.buyAlbums);
 				if (buyInfo) {
 					var priceDiv = new Element("div");
 					priceDiv.className = "album-price";
