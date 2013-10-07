@@ -9,7 +9,7 @@ Freebase and LyricsWiki.  It's rough and cobbled together from these
 sources:
 
 	http://www.json.org/json.js
-	http://www.freebase.com/view/guid/9202a8c04000641f800000000544e139#fig-albumlist2
+	http://www.freebase.com/view/mid/9202a8c04000641f800000000544e139#fig-albumlist2
 	http://mootools.net/
 	http://www.e-magine.ro/web-dev-and-design/36/moodalbox/
 	  ( itself derived from http://www.digitalia.be/software/slimbox )
@@ -364,7 +364,7 @@ var Metaweb = {};
 	 **/
 	 
 		// A utility function to return the year portion Metaweb /type/datetime
-		// From: http://www.freebase.com/view/guid/9202a8c04000641f800000000544e139#fig-albumlist2
+		// From: http://www.freebase.com/view/mid/9202a8c04000641f800000000544e139#fig-albumlist2
 		Metaweb.getYear = function(date) {
 			if (!date) {
 				return null;
@@ -380,7 +380,7 @@ var Metaweb = {};
 	
 		// Freebase stores track length times in seconds
 		// This utility gives us Minutes and Seconds
-		// From: http://www.freebase.com/view/guid/9202a8c04000641f800000000544e139#fig-albumlist2		
+		// From: http://www.freebase.com/view/mid/9202a8c04000641f800000000544e139#fig-albumlist2		
 		Metaweb.toMinutesAndSeconds = function(totalSeconds) {
 			var minutes = Math.floor(totalSeconds/60);
 			var seconds = Math.floor(totalSeconds-(minutes*60));
@@ -391,25 +391,19 @@ var Metaweb = {};
 		};
 
 	 	// Helper function for matching arrays the user has specified which are 
-	 	// supposed to specify objects for certain Freebase ids or guids
-		Metaweb.matchEntryByFreebaseIdOrGuid = function(result, entryList) {
+	 	// supposed to specify objects for certain Freebase ids or mids
+		Metaweb.matchEntryByFreebaseIdOrMid = function(result, entryList) {
 			if (!entryList) {
 				return null;
 			}
 			for (var entryIndex = 0; entryIndex < entryList.length; entryIndex++) {
-/*				if (!result.guid) {
-					alert("GUID required in query for MatchEntryByFreebaseIdOrGuid");
-				}*/
-				if (!result.id) {
-					alert("Freebase ID required in query for MatchEntryByFreebaseIdOrGuid");
+				if (!result.mid && !result.id) {
+					alert("Freebase ID or MID required in query for MatchEntryByFreebaseIdOrMid");
 				}
 				var entry = entryList[entryIndex];
-				if (entry.id && (entry.id == result.id)) {
+				if ((entry.id && (entry.id == result.id)) || (entry.mid && (entry.mid == result.mid))) {
 					return entry;
 				}
-/*				if (entry.guid && (entry.guid == result.guid)) {
-					return entry;
-				}*/
 			} 
 			return null;
 		};
@@ -808,7 +802,7 @@ var Metaweb = {};
 		// in other browsers, and the notations are supposed to be 
 		// equivalent.  I think it is a bug in Firefox.
 		var propertyString = "trackNamesOnLyricWiki"; // to keep JSlint from complaining
-		var trackObject = Metaweb.matchEntryByFreebaseIdOrGuid(track, config[propertyString]);
+		var trackObject = Metaweb.matchEntryByFreebaseIdOrMid(track, config[propertyString]);
 		if (trackObject) {
 			return trackObject.name;
 		}
@@ -917,7 +911,7 @@ var Metaweb = {};
 		if (config.imagePath) {
 			return config.imagePath;
 		}
-		return config.basePath + "media/";
+		return config.basePath + "images/";
 	}
 
 	function getCssPath(config) {
@@ -1012,7 +1006,7 @@ var Metaweb = {};
 		var query = {
 			type: "/music/album",
 			id: id,
-			guid: null,
+			mid: null, // machine ID (basically like a GUID)
 			name: null,
 			release_date: null,
 			artist: null,
@@ -1046,7 +1040,9 @@ var Metaweb = {};
 				if (cache[id].musicbrainzId) {
 				 	// http://stackoverflow.com/a/9891041/211160
  					coverImageEl.onerror = function() {this.onerror=null;this.src=unavailableLink;}; 
-					coverImageEl.setAttribute("src", 'http://coverartarchive.org/release-group/' + cache[id].musicbrainzId + '/front');
+					coverImageEl.setAttribute("src",
+						'http://coverartarchive.org/release-group/' + cache[id].musicbrainzId + '/front'
+					);
 				} else {
 					coverImageEl.setAttribute("src", unavailableLink);
 				}
@@ -1062,8 +1058,15 @@ var Metaweb = {};
 						'Visit Album Page on Freebase' +
 					'</a><br />'
 				);
-				var buyObject = Metaweb.matchEntryByFreebaseIdOrGuid(result, config.buyAlbums);
-				var buyHtml = buyObject ? '<a href="' + buyObject.link + '" target="_blank">Buy it now for ' + buyObject.price + '</a><br />' : "";
+				var buyObject = Metaweb.matchEntryByFreebaseIdOrMid(result, config.buyAlbums);
+				var buyHtml = "";
+				if (buyObject) {
+					buyHtml = (
+						'<a href="' + buyObject.link + '" target="_blank">' +
+						'Buy it now for ' + buyObject.price +
+						'</a><br />'
+					);
+				}
 				linksEl.setHTML(freebaseHtml + buyHtml);
 				linksEl.inject(containerEl);
 				
@@ -1094,7 +1097,8 @@ var Metaweb = {};
 					var headerEl = new Element("h3");
 
 					var html = ('[<a href="#"><span>+</span></a>] ' + 
-						(i + 1) + ". " + track_list[i].name + " (" + Metaweb.toMinutesAndSeconds(track_list[i].length)+")"
+						(i + 1) + ". " + track_list[i].name + " " +
+						"(" + Metaweb.toMinutesAndSeconds(track_list[i].length) + ")"
 					);
 
 					headerEl.inject(listItemEl);
@@ -1145,7 +1149,7 @@ var Metaweb = {};
 	// Main Display Routine
 	// Calls Freebase to get the album list, and then a callback function builds the
 	// table from the results
-	// Derived from: http://www.freebase.com/view/guid/9202a8c04000641f800000000544e139#fig-albumlist2
+	// Derived from: http://www.freebase.com/view/mid/9202a8c04000641f800000000544e139#fig-albumlist2
 	function displayCore(element, bandId, bandName, configParam) {
 
 		var config;
@@ -1202,7 +1206,7 @@ var Metaweb = {};
 				}],
 				
 				id: null,
-				guid: null,
+				mid: null,
 				name: null, // Return album names
 				release_date: null, // And release dates
 				sort: "-release_date" // Order by release date, minus reverses the sort (newest first)
@@ -1247,8 +1251,8 @@ var Metaweb = {};
 				'<div id="hd" style="background-color:#DDDDDD;"><p style="text-align:center;">' +
 					'Discography pulled from <a href="' + bandFreebaseURL + '" target="_blank">Freebase</a>' +
 					'<img src="' + getImagePath(config) + 'freebase.png' + '" style="vertical-align: middle;" />' +
-					'using <a href="http://hostilefork.com/albumist" target="_blank">"Albumist"</a>' +
-					'by <a href="http://hostilefork.com">Hostile Fork</a>' +
+					' using <a href="http://hostilefork.com/albumist" target="_blank">"Albumist"</a>' +
+					' by <a href="http://hostilefork.com">Hostile Fork</a>' +
 					'<img src="' + getImagePath(config) + 'hostilefork.png' + '" width="16" height="16" style="vertical-align: middle;" />' +
 				'</p></div>'
 			);				
@@ -1262,7 +1266,7 @@ var Metaweb = {};
 			for(var rawAlbumIndex = 0; rawAlbumIndex < albums.length; rawAlbumIndex++) {
 				var album = albums[rawAlbumIndex];
 
-				if (Metaweb.matchEntryByFreebaseIdOrGuid(album, config.omitAlbums)) {
+				if (Metaweb.matchEntryByFreebaseIdOrMid(album, config.omitAlbums)) {
 					continue;
 				}
 				
@@ -1348,7 +1352,7 @@ var Metaweb = {};
 				
 				setOnClickFunctionString(titleLink, functionString);
 				
-				var buyInfo = Metaweb.matchEntryByFreebaseIdOrGuid(album, config.buyAlbums);
+				var buyInfo = Metaweb.matchEntryByFreebaseIdOrMid(album, config.buyAlbums);
 				if (buyInfo) {
 					var priceDiv = new Element("div");
 					priceDiv.className = "album-price";
@@ -1381,7 +1385,7 @@ var Metaweb = {};
 			footerColumnEl.setHTML(
 				'<div id="hd" style="background-color:#DDDDDD;"><p style="text-align:center;">' +
 					'<a href="http://hostilefork.com/albumist" target="_blank">"Albumist"</a>' +
-					'is released under the' +
+					' is released under the ' +
 					'<a href="http://creativecommons.org/licenses/by/3.0/" target="_blank">' +
 						'Creative Commons Attribution 3.0 License' +
 					'</a>' +
@@ -1420,7 +1424,7 @@ var Metaweb = {};
 		this.trackNamesOnLyricWiki = null;
 		this.injectCss = true;
 		this.basePath = "";
-		this.imagePath = null; /* null means default to basePath + 'media/'; */
+		this.imagePath = null; /* null means default to basePath + 'images/'; */
 		this.cssPath = null; /* null means default to basePath + 'css/'; */
 		this.hacksForNonstandardIE = false; // if the doctype isn't set...
 	};
