@@ -38,13 +38,10 @@
 		The only version thta has been tested is with mootools 1.11, because
 		that is what Joomla! 1.5 shipped with.
 		
-		If you are using Joomla 1.5 then you are in luck.  But you are probably
-		not, so you'll have to figure out whether a manual inclusion of
-		mootools 1.11 is appropriate for your project.  It hasn't been tested
-		with other versions, and I don't currently know enough about what is a
-		compatible subset of the library to change it for 1.2 or later.
+		The trend away from mootools and toward jQuery has been further
+		established by Joomla no longer using that.
 		-->
-		<script type="text/javascript" src="mootools.js"></script>
+		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
 		
 		<!-- 
 		Web standards say scripts can appear anywhere, but CSS stylesheets
@@ -53,7 +50,7 @@
 		it in the header yourself and suppress the injection by setting
 		injectCSS to false.  For this demo we will do the latter.
 		-->
-		<link rel="stylesheet" type="text/css" href="albumist.css">
+		<link rel="stylesheet" type="text/css" href="css/albumist.css">
 		<!--
 		(Note: The code doesn't use CSS effectively right now.  So if you are
 		good at that sort of thing and all that margin/padding stuff doesn't
@@ -76,7 +73,8 @@
 	<div id="discography">	
 	</div>
 		
-	<script type="text/javascript" src="albumist.js"> </script>
+	<script type="text/javascript" src="js/albumist.js"> </script>
+	<script type="text/javascript" src="jquery.simplemodal/jquery.simplemodal.js"> </script>
 	<script type="text/javascript">
 				
 		// You can use the default settings of albumist and it will run.

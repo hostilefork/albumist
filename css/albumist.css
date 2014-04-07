@@ -1,80 +1,116 @@
-/* Stuff from MOOdalBox CSS */
+/* default CSS for the album grid */
 
-div#mb_overlay {
-position: absolute;
-left: 0;
-width: 100%;
-background-color: #000;
-cursor: pointer;
+div.albumist {
+	/*
+	 * Note that the config must specify your specific desires for the
+	 * album cover edge sizes, but it's up to you for setting the overall
+	 * width as part of your site design.
+	 */
+	width: 600;
 }
 
-div#mb_center, div#mb_bottom {
-position: absolute;
-left: 50%;
-overflow: hidden;
-background-color: #DDD;
+div.albumist table {
+	border: 0px;
 }
 
-div#mb_center {
-background-color: #FFF;
+div.albumist tr {
+	margin-bottom: 12px;
 }
 
-div#mb_contents {
-width: 400px;
-height: 400px;
-border: 10px solid #DDD;
-overflow: auto;
-background-color: #FFF;
-visibility: hidden;
+div.albumist td {
+	vertical-align: top; 
 }
 
-.mb_loading {
-background: #DDD url(loading.gif) no-repeat center center;
+div.album-title {
+	text-align: right;
+	font-size: 10px;
 }
 
-#mb_error {
-font-size: 1.2em;
-color: #CD0000;
-font-weight: bold;
-text-align: center;
-padding: 0.5em;
-font-family: Verdana, Helvetica, sans-serif;
+div.album-price {
+	text-align: right;
+	font-size: 12px;
+	margin-right: 12px;
 }
 
-#mb_error em {
-font-size: 0.8em;
+div.album-title {
+	text-align: right;
+	font-size: 10px;
 }
 
-div#mb_bottom {
-font-family: Verdana, Helvetica, sans-serif;
-font-size: 10px;
-color: #666;
-line-height: 1.4em;
-text-align: left;
-border: 10px solid #DDD;
-border-top-style: none;
+div.album-picture {
+	text-align: center;
+	display: block;
 }
 
-a#mb_close_link {
-display: block;
-float: right;
-width: 66px;
-height: 22px;
-background: transparent url(closelabel.gif) no-repeat center;
-margin: 5px 0;
+div.container {
+	display: block; 
+	clear: both;
+	height: auto;
 }
 
-div#mb_caption {
-margin-right: 71px;
+div.details {
+	display: block;
+	width: 300px;
+	float: right;
 }
 
-/* 
-STUFF FROM http://pr0digy.com/sandbox/mootools/slide-effect/style.css
-Most of it deleted, however.  A theming strategy is needed. from someone
-more capable with making web pages than The Fork.
-*/
+div.tracks {
+	display: block;
+	width: 300px;
+	float: left;
+}
 
-ul.simple, ul.simple li{ list-style:  none outside; padding: 0; }
-div#no_margin { margin: 0px; }
-div.collapse{ height: 100%; margin: 0px; }	
-div.collapse-container{ height: 100%; margin-left: 20px; }
+/* default CSS for the modal dialog box */
+/* (from SimpleModal's "Basic.css" in the demos) */
+
+/* Overlay */
+#simplemodal-overlay {
+	background-color: #000;
+}
+
+/* Container */
+#simplemodal-container {
+	height: 100%;
+	width: auto;
+	color: #bbb;
+	background-color: #333;
+	border: 4px solid #444;
+	padding: 12px;
+}
+
+#simplemodal-container .simplemodal-data {
+	padding:8px;
+	height: 100%;
+	overflow-y: hidden;
+}
+
+#simplemodal-container code {
+	background: #141414;
+	border-left: 3px solid #65B43D;
+	color: #bbb;
+	display: block;
+	font-size: 12px;
+	margin-bottom: 12px;
+	padding: 4px 6px 6px;
+}
+
+#simplemodal-container a {
+	color: #ddd;
+}
+
+/* changed the close X to a data URI to make the dependencies simpler */
+#simplemodal-container a.modalCloseImg {
+	background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAAdCAYAAABfeMd1AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAA8xJREFUeNqclktIVFEYx+fO+GjUGqw0S/IRGtTKENtkqJTkooUwC0EQNNpEEiJYoISbKAhcCYogagvBlbRQW/kAIdAkbRGIi3RiNIfJR+qk4zxO/2/4zu3cOw+tA7+5c8/j+5/vfN8592hCCMspSy4o4acXLIHVU40kkQTkglfgm4hd3KAb3PxfESf4KU5XAuBRPA0tznINgCa1Yn193bK0tBR5ZmVlWUpKSiyFhYXmcfPgiaZpn0/yZEKd4vLysqioqKCZRAEhMTc3Z/bqy0nL9Uzt3dXVJex2e0wBic1mEx0dHcLv96tDX8cTyVN7tbW1JTRupr6+3uzR7Vgib2Tr5ORklJHa2lrDe0FBgVhcXDTUDw8PqyIfY4m4ZGt5ebnB4OrqaqS+srJSj8XOzk6kbnBwUO9XVFQkgsGgKmTTRQ4PD/NlrcvlivKis7Mz0kZiJBRLQDI7O/s3rwOBu7oI1B/KhrGxsaiBtDTSsCyxBIj+/n69D+w+Jg0r/YTD4Wy5fF6vNyoD19bWLENDQ4b3pqammBtPHQ+diF0rNo4GxT3Z4HA4ogbSxmtsbNTf4ZnhXS1Ief1/KBQ6og0f2fXIkuJ4MVGDLBOACtVRW6KYuN3ue7oISIc3btmoDp6enjYYbWlp0Y3Qf1UAx40hu0pLSx0yJPRz1uPxvJONo6OjhswiAZm+BBlX3yU9PT26gM/no/PrHLDpIr29vQ/U7GloaDBk10k7vrq62uDF+Pg4ZYbDIAKuzc/PD8hOdBbRUXGaI6Wmpkbs7+/rAltbW19RX2wWSQd54A6WzaV6REcFjvSYxikGtESqBwcHB7vt7e30bSngyVtl4M+AHHCrubn5+cbGxqb5tFtYWBB9fX2iu7s78pyZmYn6ciF2e62trS9hpwxcAWlqdqWA8+A6uA+ejoyMfBL/UFZWVjbr6ureYmwNuAEugtSIff4y0rpl8CWhFDjBC6fT+R4BdB8dHYXiGZ+amvJgY35A/3ZQB+iIv8pLlaR/frHpad2S2b1McJk75vPzUlVVVV5ZWdmF5ORkGw6+EL6YvyYmJlyIxyba3eA7swG2gQ8E6NSSIhoHKIWTgISyWSyH/2fyJMjrMPgNdvl6REI/gAfsgANwTCcLJYh+kWAhGwulcfplcqwyeWPZuQ8NpnNpn41uM3vsAQkEOQuNtxWTUCp7lcHPNK6zsifH7I2PZ+5j4QBPIhz3SqQsXRLHKZVFU/hd4xkGWcjPT7k8IelBwnsXC0kxK3tn4/9SJKwYDTPCLJDocmcWlPtJUy86isGERv4IMACaz3RmXeGcqwAAAABJRU5ErkJggg==) no-repeat;
+	width: 25px;
+	height: 29px;
+	display: inline;
+	z-index: 3200;
+	position: absolute;
+	top: -15px;
+	right: -16px; 
+	cursor: pointer;
+}
+
+#simplemodal-container h3 {
+	color: #84b8d9;
+}
