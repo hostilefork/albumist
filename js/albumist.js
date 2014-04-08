@@ -60,7 +60,7 @@ var Albumist = {};
 	//
 	// Basic structure borrowed from:
 	//
-	// https://github.com/bgrins/ExpandingTextareas
+	// https://github.com/bgrins/AlbumistTextareas
 
 (function(factory) {
 	// Add jQuery via AMD registration or browser globals
@@ -71,29 +71,36 @@ var Albumist = {};
 	}
 }(function ($) {
 
-	var cssWasInjected = false;
+	// We don't want to throw up alert boxes, but we want to know when
+	// problems happen in the console for developers to debug
+	function _warn(text) {
+		if(window.console && console.warn) console.warn(text);
+	}
 
-	
-///////////////////////////////////////////////////////////////////////////////
-// FREEBASE INTERFACE CODE
-///////////////////////////////////////////////////////////////////////////////
-	
-	var Metaweb = {
 
-		// The Metaweb server
+////////////////////////////////////////////////////////////////////////////////
+
+
+	//
+	// FREEBASE INTERFACE CODE
+	//
+	
+	var Freebase = {
+
+		// The Freebase server
 		HOST: "https://www.googleapis.com",
 
 		// The service on that server
 		QUERY_SERVICE: "/freebase/v1/mqlread",
 		
-		// Send query q to Metaweb, pass result asynchronously to function f
+		// Send query q to Freebase, pass result asynchronously to function f
 		read: function(q, f) {
 
 			// Serialize and encode the query object
 			var querytext = encodeURIComponent(JSON.stringify(q));
 		
 			// Build the URL using encoded query text and the callback name
-			var url = Metaweb.HOST + Metaweb.QUERY_SERVICE +  
+			var url = Freebase.HOST + Freebase.QUERY_SERVICE +  
 				"?query=" + querytext + "&callback=?";
 
 			$.ajax({
@@ -107,12 +114,12 @@ var Albumist = {};
 			       f(json.result);
 			    },
 			    error: function(e) {
-			       alert("query failure");
+			       _warn("Albumist: query failure to Freebase");
 			    }
 			});	
 		},
 		
-		// A utility function to return the year portion Metaweb /type/datetime
+		// A utility function to return the year portion Freebase /type/datetime
 		// From: http://www.freebase.com/view/mid/9202a8c04000641f800000000544e139#fig-albumlist2
 		getYear: function(date) {
 			if (!date) {
@@ -141,16 +148,13 @@ var Albumist = {};
 
 	 	// Helper function for matching arrays the user has specified which are 
 	 	// supposed to specify objects for certain Freebase ids or mids
-		matchEntryByFreebaseIdOrMid: function(result, entryList) {
+		matchEntryByFreebaseIdOrMid: function(id, mid, entryList) {
 			if (!entryList) {
 				return null;
 			}
 			for (var entryIndex = 0; entryIndex < entryList.length; entryIndex++) {
-				if (!result.mid && !result.id) {
-					alert("Freebase ID or MID required in query for MatchEntryByFreebaseIdOrMid");
-				}
 				var entry = entryList[entryIndex];
-				if ((entry.id && (entry.id == result.id)) || (entry.mid && (entry.mid == result.mid))) {
+				if ((entry.id && (entry.id == id)) || (entry.mid && (entry.mid == mid))) {
 					return entry;
 				}
 			} 
@@ -160,437 +164,127 @@ var Albumist = {};
 	};
 
 
-///////////////////////////////////////////////////////////////////////////////
-// LYRICWIKI.ORG INTERFACE
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
-	// Try to guess LyricWiki page name from track name, but support the
-	// ability to manually override via the config
+
 	//
-	//	http://lyricwiki.org/LyricWiki:Page_names
-	function formatStringForLyricWiki(str) {
-		var result = "";
-		var startOfWord = true;
-		var i = 0;
-		for(i = 0; i < str.length; i++) {
-			var cur = str.substring(i, i+1).toLowerCase();
-			if (cur == " ") {
-				result += "_";
-				startOfWord = true;
-			} else if ((cur >= "a") && (cur <= "z")) {
-				if (startOfWord) {
-					result += cur.toUpperCase();
-				} else {
-					result += cur;
-				}
-				startOfWord = false;
-			} else {
-				// Hm, what if the song name was "Joe&Me" with no spaces?
-				// This makes Joe&me.
-				startOfWord = false; 
-				result += cur;
-			}
-		}
-		return result;
-	}
-	function formatBandNameForLyricWiki(bandName, config) {
-		if (config.bandNameOnLyricWiki) {
-			return config.bandNameOnLyricWiki;
-		} else {
-			return formatStringForLyricWiki(bandName);
-		}
-	}
-	function formatTrackNameForLyricWiki(track, config) {
-		// I am not sure why on Firefox config.trackNamesOnLyricWiki
-		// is generating a "trackNamesOnLyricWiki is undefined".  Works
-		// in other browsers, and the notations are supposed to be 
-		// equivalent.  I think it is a bug in Firefox.
-		var propertyString = "trackNamesOnLyricWiki";
-		var trackObject = Metaweb.matchEntryByFreebaseIdOrMid(track, config[propertyString]);
-		if (trackObject) {
-			return trackObject.name;
-		}
-		// If no exception made, just use the default
-		return formatStringForLyricWiki(track.name);
-	}
-	
-	// URL to view lyrics, e.g. http://lyricwiki.org/Michael_Penn:Walter_Reed
-	function getViewUrlForLyricWiki(bandName, track, config) {
-		var bandNameOnLyricWiki = formatBandNameForLyricWiki(bandName, config);
-		var trackNameOnLyricWiki = formatTrackNameForLyricWiki(track, config); 
-		return ('http://lyricwiki.org/' + 
-			encodeURIComponent(bandNameOnLyricWiki) + ':' +
-			encodeURIComponent(trackNameOnLyricWiki)
-		);	
-	}
-	
-	// URL to edit lyrics
-	// e.g. http://lyricwiki.org/index.php?title=A-Ha:Analogue_%28All_I_Want%29&action=edit
-	function getEditUrlForLyricWiki(bandName, track, config) {
+	// INSTANCE INITIALIZATION
+	//
+	// While there is a DOM element in the tree representing the
+	// discography, there is also a separate object representing the
+	// properties of a albumist instance attached to that div.  I'm
+	// not entirely sure about the advantages or disadvantages of this vs.
+	// using jQuery .data() attached to the element (is that always cleared
+	// when you unplug an element from the DOM?) but it works.
+	//
+	// One of these objects is instantiated whenever you call something like
+	// $el.albumist({option: value}); and the instance lasts until
+	// you call $el.albumist("destroy");
+	//
 
-		var bandNameOnLyricWiki = formatBandNameForLyricWiki(bandName, config);
+	var Albumist = function($div, opts) {
+		Albumist._registry.push(this);
 
-		var trackNameOnLyricWiki = formatTrackNameForLyricWiki(track, config); 
+		$div.addClass("albumist");
+		this.$div = $div;
 
-		return ('http://lyricwiki.org/index.php?title=' +
-			encodeURIComponent(bandNameOnLyricWiki) + 
-			':' +
-			encodeURIComponent(trackNameOnLyricWiki) +
-			'&action=edit'
-		);
-	}
-	
-	/* 
-	 * BEGIN DERIVATION of lyricwiki.js
-	 * http://talk-on-tech.blogspot.com/2008/07/access-to-lyricwikiorgs-rest-api-with.html
-	 *
-	 * 1 July 2008, Stefan Fussenegger
-	 * Public Domain Dedication
-	 * http://creativecommons.org/licenses/publicdomain/
-	 *
-	 */
-	
-	// JSON Request comes back as
-	// song = {
-	// 'artist':'The Rolling Stones',
-	// 'song':'19th Nervous Breakdown',
-	// 'lyrics':'You\'re the kind of person\nYou meet at certain dismal, dull affairs\n (...)',
-	// 'url':'http://lyricwiki.org/The_Rolling_Stones:19th_Nervous_Breakdown'
-	// }
-	
-	// last script node
-	var script = undefined;
-	
-	// callback function will receive the lyrics as a parameter, or null if they can't be gotten
-	function loadLyricsAsync(bandName, track, config, callback) {
-
-		var bandNameOnLyricWiki = formatBandNameForLyricWiki(bandName, config);
-
-		var trackNameOnLyricWiki = formatTrackNameForLyricWiki(track, config); 
-
-		var url = ("http://lyricwiki.org/api.php?artist=" + 
-			encodeURIComponent(bandNameOnLyricWiki) + "&song=" + 
-			encodeURIComponent(trackNameOnLyricWiki) + "&fmt=json"
-		);
-		
-		var head = document.getElementsByTagName('head')[0];
-		
-		var callbackClosure = function() {
-			// song is a global variable in the JSON
-			// anything that can be done about that?
-			if (song.lyrics == 'Not found') { // not a good way to return an error code!
-				return callback(null);
-			} else {
-				return callback(song.lyrics.replace(/\n/g, "<br />"));
-			}
-		};
-		
-		if (script) {
-			script.onReadyStateChange = null;
-			head.removeChild(script);
-		}
-		
-		script = new Element("script", {type: "text/javascript", src: url, charset: "utf-8"});
-		script.inject(head);
-		
-		if (script.addEventListener) {
-			// firefox and opera
-			script.addEventListener("load", callbackClosure, false);
-		} else if (document.all && !window.opera) {
-			// IE
-			script.onreadystatechange = function() {
-				if (script.readyState == "loaded") {
-					callback();
-					script.onReadyStateChange = null;
-				}
-			};
-		}
-	}
-
-
-///////////////////////////////////////////////////////////////////////////////
-// SINGLE ALBUM VIEW FUNCTIONALITY
-///////////////////////////////////////////////////////////////////////////////
-
-	function getImagePath(config) {
-		if (config.imagePath) {
-			return config.imagePath;
-		}
-		return config.basePath + "images/";
-	}
-
-	function getCssPath(config) {
-		if (config.cssPath) {
-			return config.cssPath
-		}
-		return config.basePath + "css/";
-	}
-	
-	// This is the core openAlbum function
-	// Each Albumist instance on the page must have its own specialization of this function
-	function openAlbumCore(id, config, cache) {
-
-		// We should probably create the modal box here and have a "Loading..."
-		// However SimpleModal is unable to dynamically size content, so
-		// creating the box while we're waiting for the data to fetch would
-		// involve additional work.  Not impossible, just trying to get the
-		// basics done first:
-		//
-		// http://stackoverflow.com/questions/1407059/
-
-		// This is the MQL query we will issue
-		// should some of these properties come from the config or cache?
-		var query = {
-			type: "/music/album",
-			id: id,
-			mid: null, // machine ID (basically like a GUID)
-			name: null,
-			release_date: null,
-			artist: null,
-            releases: [{
-            	id: null,
-            	release_date: null,
-            	track_list: [{
-            		id: null,
-            		name: null,
-            		track_number: null,
-            		length: null
-            	}]
-           	}],
-		};
-		
-		var processTracklistResult = function(result) {
-			if (result && result.releases) {
-                var release = result.releases[0];
-                var track_list = release.track_list;
-				
-				var $containerDiv = $('<div class="container">');
-
-				var unavailableLink = (
-					'http://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/' +
-					'No_image_available.svg/' + config.coverEdgeSize + 'px-No_image_available.svg.png'
-				);
-				
-				var $detailsDiv = $('<div class="details"></div>');
-
-				var $coverImg = $("<img></img>", {
-					width: config.coverEdgeSize,
-					height: config.coverEdgeSize
-				});
-				if (cache[id].musicbrainzId) {
-				 	// http://api.jquery.com/error/
- 					$coverImg.error(function() {
- 						// just because there's a MusicBrainz ID doesn't mean
- 						// there's artwork.  If we queried MusicBrainz directly
- 						// instead of going through Freebase we might have
- 						// enough info to not need this handler.
- 						$(this).attr("src", unavailableLink);
- 					}); 
-					$coverImg.attr("src",
-						'http://coverartarchive.org/release-group/' + cache[id].musicbrainzId + '/front'
-					);
-				} else {
-					$coverImg.attr("src", unavailableLink);
-				}
-
-				$detailsDiv.append($coverImg);
-				var $linksDiv = $("<div></div>");
-
-				// There was a visit Freebase URL link but it was big
-				/* var freebaseUrl = 'http://freebase.com/view' + result.id; */
-
-				var buyObject = Metaweb.matchEntryByFreebaseIdOrMid(result, config.buyAlbums);
-				var buyHtml = "";
-				if (buyObject) {
-					buyHtml =
-						'<a href="' + buyObject.link + '" target="_blank">' +
-						'Buy it now for ' + buyObject.price +
-						'</a><br />'
-					;
-				}
-				$linksDiv.html(buyHtml);
-				$detailsDiv.append($linksDiv);
-				
-				$containerDiv.append($detailsDiv);
-
-				var $tracksDiv = $('<div class="tracks"></div>');
-
-				// Another CSS inconsistency
-				// http://snipplr.com/view/2368/class-and-classname/
-				var $headingEl = $("<div></div>", {
-					class: "heading"
-				});
-
-				// Create HTML elements to display the album name and year.				
-				var $albumTitleEl = $("<h2></h2>");
-				var year = Metaweb.getYear(release.release_date);
-				var text = result.name + (year?(" ["+year+"]"):""); // name+year
-				$albumTitleEl.text(text);
-				$headingEl.append($albumTitleEl);
-				$tracksDiv.append($headingEl);
-
-				var $tracksOl = $("<ol></ol>", {
-					id: "vertical",
-					class: "simple"
-				});
-				$tracksDiv.append($tracksOl);
-				
-				var collapsibles = [];
-				var headings = [];
-				
-				// Build an array of track names + lengths
-				$.each(track_list, function(i, track) {
-					// Are track numbers ever not sequential to not use a 
-					// numbered list?
-
-					var $trackLi = $("<li></li>");
-					var trackText = track.name;
-					if (track.length) {
-						trackText += " (" + Metaweb.toMinutesAndSeconds(track.length) + ")";  
-					} 
-					$trackLi.text(trackText);
-					$tracksOl.append($trackLi);
-				});
-
-				$containerDiv.append($tracksDiv);
-
-				var $modal_box = $("<div id='basic-modal'></div>");
-
-				var $modal_content = $("<div class='simplemodal-data'></div>");
-				$modal_content.append($containerDiv);	
-
-				$modal_box.append($modal_content);
-
-				$modal_box.modal({
-					// "Fixed" means the box will scroll with the page instead
-					// of float as you scroll it in the same location it was
-					// when it popped up.
-
-					fixed: false
-				});
-			}
-			else {
-				// If empty result display error message
-				alert("failed to open");
-			}
-		};
-		
-		// Issue the query, invoke the nested function when the response arrives
-		Metaweb.read(query, processTracklistResult);
-	}
-
-
-///////////////////////////////////////////////////////////////////////////////
-// ALBUM GRID VIEW FUNCTIONALITY
-///////////////////////////////////////////////////////////////////////////////
-
-	// Main Display Routine
-	// Calls Freebase to get the album list, and then a callback function builds the
-	// table from the results
-	// Derived from: http://www.freebase.com/view/mid/9202a8c04000641f800000000544e139#fig-albumlist2
-	function displayCore(element, bandId, bandName, configParam) {
-
-		var config;
-		if (!configParam) {
-			config = new Albumist.Config();
-		} else {
-			config = configParam;
-		}
-			
 		// can't specify both id AND bandName
-		if (bandName && bandId) {
-			throw "Albumist Error: cannot have both bandName and id properties set to non-null values";
+		if (opts.bandName && opts.bandId) {
+			throw Error("Albumist: can't specify both a band name and ID in config");
 		}
-		
-		// Albumist modification: set styles here so that you don't have to touch
-		// the site's CSS if you're posting in a blog.  CSS cannot appear in the
-		// body of your document according to the W3C spec.
-		if (config.injectCss && !cssWasInjected) {
-			$('head').prepend($(
-				'<link type="text/css" rel="stylesheet" href="' + 
-				getCssPath() + 'albumist.css" media="screen">'
-			));
-			cssWasInjected = true;
-		}
-		
+		this.bandName = opts.bandName;
+		this.bandId = opts.bandId;
+
+		this.thumbEdgeSize = opts.thumbEdgeSize;
+		this.coverEdgeSize = opts.coverEdgeSize;
+		this.albumsPerRow = opts.albumsPerRow;
+		this.omitAlbums = opts.omitAlbums;
+		this.buyAlbums = opts.buyAlbums;
+
 		// We save some things from our initial album query to be used later
 		// (such as the image URL for an album)
-		var cache = {};
-		
-		// Find the document elements we need to insert content into 
-		var $albumlist = $("#" + element);
-		$albumlist.addClass("albumist");
+		this.cache = {};
 
-		var $loadingEl = $("<p><b><i>Loading...</i></b></p>");
-		$albumlist.prepend($loadingEl);
-		
-		var query = {					  // This is our MQL query 
-			type: "/music/artist",		 // Find a band
-			name: bandName,					// With the specified name
-			id: bandId,						// want the ID of the band to link to their Freebase page
-			
-			album: [{					  // We want to know about albums
-				"/common/topic/image" : [{
-					id: null,
-					optional: true
-				}],
-				key: [{
-					namespace: "/authority/musicbrainz",
-					value: null
-				}],
-				
-				id: null,
-				mid: null,
-				name: null, // Return album names
-				release_date: null, // And release dates
-				sort: "-release_date" // Order by release date, minus reverses the sort (newest first)
-			}]
-		};
-				
-		// This function is invoked when we get the result of our MQL query
-		function buildAlbumTable(result) {		
-			// If no result, the band was unknown.
-			if (!result || !result.album) {
-				$albumlist.html("<b><i>Unknown band: " + config.bandName ? config.bandName : config.bandId + "</i></b>");
-				return;
-			}
-			
-			// Otherwise, the result object matches our query object, 
-			// but has album data filled in.  
-			var albums = result.album;  // the array of album data
-					 
-			// Erase the "Loading..." message we displayed earlier
-			var $tableEl = $("<table><tbody></tbody></table>");
-			$loadingEl.replaceWith($tableEl);
-			
-			var $tbodyEl = $tableEl.find("tbody");
+		this.initializeAlbumGrid();
+	};
 
-			var bandFreebaseURL = "http://www.freebase.com/view" + result.id;
+	// Stores (active) `Albumist` instances
+	// Destroyed instances are removed
+	Albumist._registry = [];
 
-			var $rowEl = null;
+	// Returns the `Albumist` instance given a DOM node
+	Albumist.getAlbumistInstance = function(div) {
+		var $divs = $.map(Albumist._registry, function(instance) {
+			return instance.$div[0];
+		}),
+		index = $.inArray(div, $divs);
+		return index > -1 ? Albumist._registry[index] : null;
+	};
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+
+	//
+	// BEGIN MEMBER FUNCTIONS COMMON TO ALBUMIST INSTANCES
+	//
+	// These are functions that expect to be called with a "this" parameter
+	// being the Albumist instance they are running on.  That way they
+	// have access to the configuration data without having to go hunting
+	// for the information associated with an element.
+	//
+
+	Albumist.prototype = {
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+
+		// 
+		// ALBUM GRID ROUTINES
+		//
+		// Calls Freebase to get the album list, and then a callback function
+		// builds the table from the results. 
+		//
+
+		_buildAlbumTable: function(albumList) {		
+
+			var instance = this;
+
+			var $table = $("<table><tbody>");
+			var $tbody = $("<tbody></tbody>");
+			$table.append($tbody);
+
+			// We want each column in the table to be the result of rounding
+			// down the total width divided by albums per row
+			// REVIEW: if the width changes, we may want to relayout for
+			// dynamically sizing the discography, not currently supported
+			var colWidth = Math.floor(this.$div.width()/this.albumsPerRow);
+
+			var $row = null;
 			// Loop through the albums, but we may omit some from the list; so
 			// keep an index of albums we are actually using
 			var albumIndex = 0;
-			$.each(albums, function(rawAlbumIndex, album) {
+			$.each(albumList, function(rawAlbumIndex, album) {
 
-				if (Metaweb.matchEntryByFreebaseIdOrMid(album, config.omitAlbums)) {
+				if (Freebase.matchEntryByFreebaseIdOrMid(
+					album.id, album.mid, this.omitAlbums
+				)) {
 					return;
 				}
 				
-				cache[album.id] = {};
+				instance.cache[album.id] = {};
 				
-				var musicbrainzId = album.key.length > 0 ? album.key[0].value : null;
+				var musicbrainzId = album.key.length ? album.key[0].value : null;
 
-				if (albumIndex % config.albumsPerRow === 0) {
-					$rowEl = $("<tr></tr>");
-					$tbodyEl.append($rowEl);
+				if (albumIndex % instance.albumsPerRow === 0) {
+					$row = $("<tr></tr>");
+					$tbody.append($row);
 				}			
 
-				// Can't inherit or put vertical-align on the row, must be on the cell
-				// http://www.gtalbot.org/BrowserBugsSection/Opera9Bugs/VerticalAlignTableRow.html
-				// Note: round width of column down to make all columns equal width and never exceed table size				
-				var $columnEl = $('<td></td>');
-				$rowEl.append($columnEl);
+				var $column = $('<td></td>');
+				$row.append($column);
+				$column.css("width", colWidth);
 				
 				var $albumDiv = $('<div class="album"></div>');
 
@@ -602,49 +296,59 @@ var Albumist = {};
 				});
 
 				var $thumbImg = $("<img></img>", {
-					width: config.thumbEdgeSize,
-					height: config.thumbEdgeSize,
+					width: instance.thumbEdgeSize,
+					height: instance.thumbEdgeSize,
 					border: 0
 				});
 
 				var unavailableLink = 
 					"http://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/" +
-					config.thumbEdgeSize + "px-No_image_available.svg.png";
+					instance.thumbEdgeSize + "px-No_image_available.svg.png";
 
 				if (musicbrainzId === null) {
 					$thumbImg.attr("src", unavailableLink);
- 					cache[album.id].musicbrainzId = null;
+					instance.cache[album.id].musicbrainzId = null;
 				} else {
- 					cache[album.id].musicbrainzId = musicbrainzId;
+					instance.cache[album.id].musicbrainzId = musicbrainzId;
 
 				 	// http://api.jquery.com/error/
- 					$thumbImg.error(function() {
- 						// just because there's a MusicBrainz ID doesn't mean
- 						// there's artwork.  If we queried MusicBrainz directly
- 						// instead of going through Freebase we might have
- 						// enough info to not need this handler.
- 						$(this).attr("src", unavailableLink);
- 					}); 
+					$thumbImg.error(function() {
+						// just because there's a MusicBrainz ID doesn't mean
+						// there's artwork.  If we queried MusicBrainz directly
+						// instead of going through Freebase we might have
+						// enough info to not need this handler.
+						$(this).attr("src", unavailableLink);
+					}); 
 
- 					if (true) {
-					   	$thumbImg.attr("src",
-					   		/* 'http://ecx.images-amazon.com/images/I/31773C0MTBL.jpg' */
-					   		'http://coverartarchive.org/release-group/' + musicbrainzId + '/front-250'
-				   		);
+					if (true) {
+				   		$thumbImg.attr("src",
+				   			'http://coverartarchive.org/release-group/' + 
+				   			musicbrainzId + 
+				   			'/front-250'
+			   			);
 				   	} else {
 						// Freebase image links for old album covers still work,
-						// but they are no longer accepting new covers. 					
+						// but they are no longer accepting new covers.  They
+						// have also disabled the image thumbnail services
+						// and you can only say what the "max width" and
+						// "max height" you'll accept are.  It's kind of beyond
+						// the point because they aren't allowing uploads of
+						// cover art anymore, but this sort of works for the
+						// old art at last check.
 
 				   		if (album["/common/topic/image"].length > 0) {
 					  		$thumbImg.attr("src",
-						   		'https://www.googleapis.com/freebase/v1/image' + album["/common/topic/image"][0].id + '?maxwidth=' + 2000 + '&maxheight=' + 2000
+						   		'https://www.googleapis.com/freebase/v1/image' +
+						   		album["/common/topic/image"][0].id +
+						   		'?maxwidth=' + 2000 + 
+						   		'&maxheight=' + 2000
 					   		);
 					  	}
 				   	}
 				}
 				
 				var albumClickedListener = function(event) {
-					openAlbumCore(album.id, config, cache);
+					instance.openAlbumDetails.call(instance, album.id);
 				
 					return false; // signal do NOT open window to freebase...
 				};
@@ -666,56 +370,399 @@ var Albumist = {};
 				
 				$titleLink.click(albumClickedListener);
 
-				var buyInfo = Metaweb.matchEntryByFreebaseIdOrMid(album, config.buyAlbums);
+				var buyInfo = Freebase.matchEntryByFreebaseIdOrMid(
+					album.id, album.mid, instance.buyAlbums
+				);
 				if (buyInfo) {
 					var $priceDiv = $('<div class="album-price"></div>');
-					$priceDiv.html('<a href="' + buyInfo.link + '" target="_blank">BUY: ' + buyInfo.price + '</a>');
+					$priceDiv.html(
+						'<a href="' + buyInfo.link + '" target="_blank">BUY: ' 
+						+ buyInfo.price + '</a>'
+					);
 					$albumDiv.append($priceDiv);	
 				}
 				
-				$columnEl.append($albumDiv);
+				$column.append($albumDiv);
 				
 			 	albumIndex++;
-			});	
-		}
+			});
+
+			this.$div.append($table);
+		},
+
+		initializeAlbumGrid: function() {
 			
-		// Issue the query and invoke the function below when it is done
-		Metaweb.read(query, buildAlbumTable);
-	}
+			// Currently we start by leaving whatever is in the div until
+			// the load is finished or failed.
+			
+			// In the query, fields that are filled in are used for matching.
+			// Fields that are left null represent the values we want filled in
+			// Note that only one of bandName or bandId can be null, and we
+			// will thus be requesting to retrieve the null one in result
+			var query = {
+				type: "/music/artist",
+				name: this.bandName,
+				id: this.bandId,
+				
+				// An array containing patterns with null indicates we're
+				// looking for a potential array of matches, each one filled
+				// in with the properties we're requesting.  Hence this
+				// album template is a way of asking for potentially several
+				// matching albums in the album field of the result.
+				album: [{
+					"/common/topic/image" : [{
+						id: null,
+						optional: true
+					}],
+					key: [{
+						namespace: "/authority/musicbrainz",
+						value: null
+					}],
+					
+					id: null,
+					mid: null,
+					name: null,
+					release_date: null,
+
+					// Sort array by release date, minus reverses (newest first)
+					sort: "-release_date"
+				}]
+			};
+			
+			var instance = this;
+
+			// Issue the query and invoke the function below when it is done
+			Freebase.read(query, function(result) {
+
+				// At this point we erase whatever was initially in the div
+				instance.$div.empty();
+
+				// If no result, the band was unknown.
+				if (!result || !result.album) {
+					instance.$div.html(
+						"<b><i>Unknown band: " + 
+						this.bandName ? this.bandName : this.bandId 
+						+ "</i></b>"
+					);
+				} else {
+					// Otherwise, the result object matches our query object,
+					// but has album data filled in.  Though singular "album",
+					// it's actually an array of album data.  Also have the
+					// canonized ID but we don't currently use it for anything
+
+					var bandURL = "http://www.freebase.com/view" + result.id;
+
+					instance._buildAlbumTable.call(instance, result.album);
+				}
+			});
+		},
 
 
-///////////////////////////////////////////////////////////////////////////////
-// EXPOSED API
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
-	// Default configuration generator
-	// Read about what the config settings do on http://hostilefork.com/albumist
-	Albumist.Config = function() {
-		this.thumbEdgeSize = 120;
-		this.coverEdgeSize = 300;
-		this.albumsPerRow = 5;
-		this.bandNameOnLyricWiki = null;
-		this.trackNamesOnLyricWiki = null;
-		this.injectCss = true;
-		this.basePath = "";
-		this.imagePath = null; /* null means default to basePath + 'images/'; */
-		this.cssPath = null; /* null means default to basePath + 'css/'; */
+
+		// 
+		// ALBUM DETAILS VIEW
+		//
+		// This creates a SimpleModal dialog box that pops up for showing a
+		// view of the album's tracks and a larger version of the cover
+		//
+
+		_createDetailsPopup: function(album, releaseList) {
+
+			// We currently just take the first release in the array
+			// (should probably at least mention/hyperlink the other releases
+			// if there are any, or make a tab for each?)
+            var release = releaseList[0];
+            var trackList = release.track_list;
+			
+			var $containerDiv = $('<div class="container">');
+
+			var unavailableLink = (
+				'http://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/' +
+				'No_image_available.svg/' + this.coverEdgeSize + 
+				'px-No_image_available.svg.png'
+			);
+			
+			var $detailsDiv = $('<div class="details"></div>');
+
+			var $coverImg = $("<img></img>", {
+				width: this.coverEdgeSize,
+				height: this.coverEdgeSize
+			});
+			if (this.cache[album.id].musicbrainzId) {
+			 	// http://api.jquery.com/error/
+				$coverImg.error(function() {
+					// just because there's a MusicBrainz ID doesn't mean
+					// there's artwork.  If we queried MusicBrainz directly
+					// instead of going through Freebase we might have
+					// enough info to not need this handler.
+					$(this).attr("src", unavailableLink);
+				}); 
+				$coverImg.attr("src",
+					'http://coverartarchive.org/release-group/' +
+					this.cache[album.id].musicbrainzId + '/front'
+				);
+			} else {
+				$coverImg.attr("src", unavailableLink);
+			}
+
+			$detailsDiv.append($coverImg);
+			var $linksDiv = $("<div></div>");
+
+			// There was a visit Freebase URL link but it was taking up space
+			/* var freebaseUrl = 'http://freebase.com/view' + album.id; */
+
+			var buyObject = Freebase.matchEntryByFreebaseIdOrMid(
+				album.id, album.mid, this.buyAlbums
+				);
+			var buyHtml = "";
+			if (buyObject) {
+				buyHtml =
+					'<a href="' + buyObject.link + '" target="_blank">' +
+					'Buy it now for ' + buyObject.price +
+					'</a><br />'
+				;
+			}
+			$linksDiv.html(buyHtml);
+			$detailsDiv.append($linksDiv);
+			
+			$containerDiv.append($detailsDiv);
+
+			var $tracksDiv = $('<div class="tracks"></div>');
+
+			// Another CSS inconsistency
+			// http://snipplr.com/view/2368/class-and-classname/
+			var $headingEl = $("<div></div>", {
+				class: "heading"
+			});
+
+			// Create HTML elements to display the album name and year.				
+			var $albumTitleEl = $("<h2></h2>");
+			var year = Freebase.getYear(release.release_date);
+			var text = album.name + (year?(" ["+year+"]"):""); // name+year
+			$albumTitleEl.text(text);
+			$headingEl.append($albumTitleEl);
+			$tracksDiv.append($headingEl);
+
+			var $tracksOl = $("<ol></ol>", {
+				id: "vertical",
+				class: "simple"
+			});
+			$tracksDiv.append($tracksOl);
+			
+			var collapsibles = [];
+			var headings = [];
+			
+			// Build an array of track names + lengths
+			$.each(trackList, function(i, track) {
+				// Are track numbers ever not sequential to not use a 
+				// numbered list?
+
+				var $trackLi = $("<li></li>");
+				var trackText = track.name;
+				if (track.length) {
+					trackText += " (" + Freebase.toMinutesAndSeconds(track.length) + ")";  
+				} 
+				$trackLi.text(trackText);
+				$tracksOl.append($trackLi);
+			});
+
+			$containerDiv.append($tracksDiv);
+
+			var $modalBox = $("<div id='basic-modal'></div>");
+
+			var $modalContent = $("<div class='simplemodal-data'></div>");
+			$modalContent.append($containerDiv);	
+
+			$modalBox.append($modalContent);
+
+			$modalBox.modal({
+				// "Fixed" means the box will scroll with the page instead
+				// of float as you scroll it in the same location it was
+				// when it popped up.
+
+				fixed: false
+			});
+		},
+
+		openAlbumDetails: function(albumId) {
+
+			// We should probably create the modal box here and have a "Loading..."
+			// However SimpleModal is unable to dynamically size content, so
+			// creating the box while we're waiting for the data to fetch would
+			// involve additional work.  Not impossible, just trying to get the
+			// basics done first:
+			//
+			// http://stackoverflow.com/questions/1407059/
+
+			// This is the MQL query we will issue
+			// should some of these properties come from the config or this.cache?
+			var query = {
+				type: "/music/album",
+				id: albumId,
+				mid: null, // machine ID (basically like a GUID)
+				name: null,
+				release_date: null,
+				artist: null,
+	            releases: [{
+	            	id: null,
+	            	release_date: null,
+	            	track_list: [{
+	            		id: null,
+	            		name: null,
+	            		track_number: null,
+	            		length: null
+	            	}]
+	           	}],
+			};
+			
+			var instance = this;
+
+			// Issue the query, invoke the nested function when the response arrives
+			Freebase.read(query, function(result) {
+				if (result && result.releases) {
+					// to make things clearer, separate album and releaseList
+					// pass the releaseList to the details popup vs. paring
+					// down to a single album in case a UI is created for it
+					var releaseList = result.releases;
+					delete result.releases;
+					var album = result;
+					instance._createDetailsPopup.call(instance, album, releaseList);
+				} else {
+					throw Error("Albumist: Invalid album details retrieved");
+				}
+			});
+		}
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+
+	//
+	// END OF MEMBER FUNCTIONS
+	//
+
 	};
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+
+	//
+	// JQUERY EXTENSION REGISTRATION
+	//
+	// This is the jQuery extension function which allows you to choose any
+	// jQuery collection and run $(selector).albumist(...)
+	//
+	// Here the default options are set up.
+	//
+
+	$.albumist = $.extend({
+		// Global options for the behavior of the albumist plugin
+		injectCss: true,
+		basePath: "",
+		cssPath: null, // null means default to basePath + 'css/';
+		imagePath: null, // null means default to basePath + 'images/';
+
+		// These are the per-instance options.  If there's a piece of state
+		// or a hook that might be different between one div and another
+		// then it needs to go in here.
+		opts: {
+			thumbEdgeSize: 120,
+			coverEdgeSize: 300,
+			albumsPerRow: 5,
+			omitAlbums: null,
+			buyAlbums: null,
+			bandName: null,
+			bandId: null
+		}
+	}, $.albumist || {});
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+
+	//
+	// JQUERY ALBUMIST INSTANTIATOR + METHOD DISPATCHER
+	//
+	// This is the method dispatcher, and if a method is not detected then it
+	// can initialize a new albumist discography on an element.
+	//
+
+	$.fn.albumist = function(o) {
+
+		if (o === "destroy") {
+			this.each(function() {
+				var instance = Albumist.getAlbumistInstance(this);
+				if (instance) instance.destroy();
+			});
+			return this;
+		}
+
+		// Checks to see if any of the given DOM nodes have the
+		// expanding behaviour.
+		if (o === "active") {
+			return !!this.filter(function() {
+				return !!Albumist.getAlbumistInstance(this);
+			}).length;
+		}
+
+		var opts = $.extend({ }, $.albumist.opts, o);
+
+		this.filter("div").each(function() {
+			var initialized = Albumist.getAlbumistInstance(this);
+
+			if (!initialized) new Albumist($(this), opts);
+			else {
+				if (initialized) {
+					_warn("Albumist: attempt to initialize a div that already has been initialized.");
+				}
+			}
+		});
+		return this;
+	};
+
+
+////////////////////////////////////////////////////////////////////////////////
+
 	
-	// If you're too lazy to look in Freebase for the unambiguous ID (?)
-	// Then use this, bandName is a string e.g. "The Legendary Pink Dots"
-	Albumist.displayByBandName = function(element, bandName, configParam) {
-		return displayCore(element, null, bandName, configParam);
-	};
-	
-	// Proper way to unambiguously specify a band is to use a Freebase ID
-	// for instance: "/en/the_legendary_pink_dots"
-	Albumist.displayByFreebaseId = function(element, bandId, configParam) {
-		return displayCore(element, bandId, null, configParam);
-	};
+	//
+	// GLOBAL PLUGIN INITIALIZATION CODE
+	//
+	// This is the code that runs only once at plugin initialization.
+	//
 
-	// We don't export anything to AMD and probably won't ever, as it'll be
-	// a jQuery plugin.
+	$(function () {
+		if ($.albumist.injectCss) {
+			var cssPath = $.albumist.cssPath;
+			if (!cssPath) {
+				cssPath = $.albumist.basePath + "css/";
+			}
+
+			// Albumist modification: set styles here so that you don't have to
+			// touch the site's CSS if you're posting in a blog.  CSS cannot appear
+			// in the body of your document according to the W3C spec.
+			$('head').prepend($(
+				'<link type="text/css" rel="stylesheet" href="' + 
+				cssPath + 'albumist.css" media="screen">'
+			));
+		}
+	});
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+
+	//
+	// EXPOSED API
+	//	
+	// We don't export anything to RequireJS and probably won't ever, as
+	// all the necessary functionality is available on the jQuery global
+	// plugin methodology as $(element).albumist({...options...})
+	//
+
 	return null;
+
 		
 }));
