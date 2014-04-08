@@ -1,141 +1,164 @@
-<html>
-	<!--
-	Sample HTML demonstrating how to invoke the Albumist discography script
-	Original codebase assembled by tech blogger "Hostile Fork"
-	Read more about it at http://hostilefork.com/albumist
+<!doctype html>
+<!-- http://stackoverflow.com/a/11846837/211160 -->
+<!--[if lt IE 7]> <html lang="en" class="ie lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>    <html lang="en" class="ie lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>    <html lang="en" class="ie lt-ie9"> <![endif]-->
+<!--[if gt IE 8]> <html lang="en" class="ie"> <![endif]-->
+<html lang="en">
+<meta charset="utf-8"> 
+
+<!--
+
+	albumist.html
+	Sample HTML demo of invoking the Albumist Discography Widget
+	Copyright (C) 2008-2014 HostileFork.com
+
+	Read more about it at http://albumist.hostilefork.com
 	Distributed under the Creative Commons Attribution License 3.0
 	
-	Albumist was written to work with The Legendary Pink Dots' new website,
-	with the goal of helping fans get involved in managing their prolific
-	discography.  Please check out their music: 
-		
-			http://legendarypinkdots.org/music
-			
-	...and see them on their 2008 tour!
-	-->
+-->
 	
 	<!--
 	(Note: Don't be afraid of the length of this file.  Albumist is very easy
-	to use in your webpage.  It "works" with as little code as:
+	to use in your webpage.  It "works" with as little html as:
 		
 		<div id="discography">	
 		</div>
-		<script type="text/javascript" src="albumist.js"> </script>
-		<script type="text/javascript">
-		Albumist.displayByBandName("discography", "The Legendary Pink Dots");
-		</script>
+
+	...with a corresponding JavaScript call that looks like:
+
+		$("#discography).albumist({
+			bandName: "The Legendary Pink Dots"
+		});
+
+	(Of course the necessary inclusions you would expect; you need to be using
+	jQuery, have your HTML doctype, all the usual things you likely know some
+	bit about if you're making a web page.)
 	
-	But this is just some rather thorough "living" documentation of all the
-	configuration options.  Hence the length.  It is my hope that Albumist
-	will become even more flexible in the future, so there will be even 
-	more options!
+	But that's just a default layout which you probably want to change.  So
+	this is just some explicit "living" documentation of all the
+	configuration options.  Hence the length.  Because this plug-in was
+	initially created for the Legendary Pink Dots band site to manage their
+	prolific catalog, I'll use them for the example...
+
+	I'd hope that people help make Albumist even more flexible in the future,
+	so there will be even more options!
 	-->
 	
 	<head>
-		<!--		
-		Because The Dots' site used the Joomla! content management system, it
-		was fairly obvious we'd be using mootools as the JavaScript library.
-		The only version thta has been tested is with mootools 1.11, because
-		that is what Joomla! 1.5 shipped with.
-		
-		The trend away from mootools and toward jQuery has been further
-		established by Joomla no longer using that.  So the arduous work of
-		converting to a jQuery plugin was undertaken.
-		-->
+		<title>Albumist Widget Demo Page</title>
+
+		<!-- jQuery library, Google-hosted version -->
 		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+
+		<!--
+		SimpleModal dialog box
+
+		http://www.ericmmartin.com/projects/simplemodal/
+
+		In this future this shouldn't be a required dependency, because you
+		should be able to hook to do whatever you want when the album is
+		clicked.  For now, it brings up a modal dialog box.
+		-->
+		<script type="text/javascript" src="jquery.simplemodal/jquery.simplemodal.js"> </script>
 		
-		<!-- 
-		Web standards say scripts can appear anywhere, but CSS stylesheets
-		only in the <head></head>!  Albumist can inject its css into the
-		head of your page when it runs, which is the default.  Or you can put
-		it in the header yourself and suppress the injection by setting
-		injectCSS to false.  For this demo we will do the latter.
+		<!--
+		Stylesheet needed for albumist, see the albumist.css file for notes
+		on what you can override and what purposes they serve.
 		-->
 		<link rel="stylesheet" type="text/css" href="css/albumist.css">
-		<!--
-		(Note: The code doesn't use CSS effectively right now.  So if you are
-		good at that sort of thing and all that margin/padding stuff doesn't
-		make you want to put a rock through your monitor, then your help in
-		improving it would be appreciated!)
-		-->
 
+		<!-- Albumist JavaScript code -->
 		<script type="text/javascript" src="js/albumist.js"> </script>
-		<script type="text/javascript" src="jquery.simplemodal/jquery.simplemodal.js"> </script>
+
+		<!-- Initialization (your page likely already has a place for this) -->
 		<script type="text/javascript">
 
+			// We want to turn a <div> with the id "discography" into an
+			// albumist widget, but the HTML document nodes for the page
+			// must already be loaded.  The $(function()) notation in jQuery
+			// lets us register a callback that runs only when that is done.
 			$(function() {
-				// You can use the default settings of albumist and it will run.
-				// But probably won't be the results you like.  Here we use
-				// the jQuery selector "#discography" to invoke the albmist plugin
-				// with configuration options on the element width id="discography"
 				
+				// Unless someone is filtering what you are putting into
+				// HTML, you can put script code anywhere in a file.  But
+				// you can only put CSS code in the header.  It's not an ideal
+				// solution to use code to add the CSS, but if you are stuck
+				// in that position albumist can do it.  Just pass it the
+				// page-relative path or an absolute path, if you don't
+				// supply one it assumes "css/albumist.css"
+
+				/* $.albumist.injectCss("css/albumist.css"); */
+
+				//
+				// Now select the DIV with ID "discography" and turn it to an
+				// Albumist widget with the given options.
+				//
 				$("#discography").albumist({
 
-					// Freebase ID of the band
-					bandId: "/en/the_legendary_pink_dots",
+					// Freebase MID (machine ID) of the Legendary Pink Dots
+					// You can read about what a MID ("/m/xxxxx") is here:
+					//
+					// http://wiki.freebase.com/wiki/Machine_ID
+					//
+					// But they are Freebase's "new way" of doing unique IDs
+					// To find a band's MID, look them up on Freebase and it
+					// will be listed on their details page
+					bandMid: "/m/02mmvr",
 
-					// Note that you could also use the band's name instead of the
-					// Freebase ID, but this might end up ambiguous if another musical
-					// artist shows up... with some name like "Pink Floyd vs The Legendary
+					// Note that you could also use the band's name instead of
+					// the Freebase ID, but this might end up ambiguous if
+					// another musical artist shows up... or even the same
+					// artist collaborating as "Pink Floyd vs The Legendary
 					// Pink Dots" for instance.
-					/* bandName: "The LegendaryPink Dots", */
+					/* bandName: "The Legendary Pink Dots", */
 
 					// Size of the album thumbnails in the whole page grid
 					thumbEdgeSize: 100,
 			
-					// Size of the covers once a single album is selected for opening
+					// Size of covers once an album is selected for detail view
 					coverEdgeSize: 300,
 			
 					// Number of albums per row in the table
 					albumsPerRow: 4,
 				
-					// IDs or GUIDs of albums to omit.  This can be useful especially if
-					// Freebase administrators are being a little slow to merge or 
-					// delete albums that are spam or redundant copies.  
+					// Freebase MIDs of albums to omit.  This can be useful,
+					// especially if Freebase administrators are being a little
+					// slow to merge or delete albums that are spam or redundant
+					// copies.
 					//
-					// (For instance, if no merge has happened between the MusicBrainz-
-					// derived Freebase topic and a Wikipedia-derived Freebase topic, you
-					// might have two copies of an album showing.  The best thing to do is
-					// to flag the topics for merge, then go to the one with the track
-					// information and make sure it has cover art.  Add the ID or GUID of
-					// the lesser article to this list.  You can remove it when the
-					// Freebase administrators have done the merge, but there is no harm
-					// to leaving it in.)
+					// (For instance, if no merge has happened between the
+					// MusicBrainz-derived Freebase topic and a
+					// Wikipedia-derived Freebase topic, you might have two
+					// copies of an album showing.  The best thing to do is
+					// to flag the topics for merge, then go to the one with
+					// the track information and make sure it has cover art.
+					// Add the MID of the lesser article to this list.
+					// You can remove it when the Freebase administrators have
+					// done the merge, but there is no harm to leaving it in.)
+					//
 					omitAlbums: [
-						{
-							// "The Crushed Velvet Apocalypse" Wikipedia-derived entry
-							guid: "#9202a8c04000641f8000000004832f14"
-						}, {
-							// "The Maria Dimension" Wikipedia-derived entry
-							id: "/guid/9202a8c04000641f8000000004832fda"
-						}
+						/*
+						"/m/04gd9zj", // Would omit Plutonium Blonde
+						... // etc...
+						*/
 					],
 				
-					// Terribly simple implementation of a "Buy" link.  Though Albumist is
-					// not a store, I thought it would be nice to let artists supply a
-					// link where the albums could be bought direct from them.  Again,
-					// you may specify either an ID or a GUID.  Don't confuse a guid-based
-					// ID in freebase (that starts with "/guid" with an actual guid, which
-					// starts with a pound sign and is followed by digits and letters.)
-					buyAlbums: [
-						// Plutonium Blonde is avaiable for pre-order
-						{
-							id: "/guid/9202a8c04000641f8000000008e627d0",
-							price: "15 EUR",
-							link: "http://www.legendarypinkdots.org/component/content/article/28-merchandise/1253-pre-order-plutonium-blonde"
-						}
-					],
-				
-					// As discussed earlier, you can tell Albumist NOT to inject the 
-					// albumist.css file into the header.  If you're on a system where you
-					// don't control the header easily...then just let Albumist do the
-					// default injection.  In our case we are turning it off.
-					injectCss: false,
-				
-					// You can tell albumist where you put the CSS file and icons and such
-					// but if they're all in the current directory then you don't need to.
-					// Note that it should end with a slash.
-					/* basePath: "http://legendarypinkdots.org/albumist/"  */
+					// Very simple implementation of a "Buy" link.  Though
+					// Albumist is not a store, I thought it would be nice that
+					// if artists have some promotion going for a new album or
+					// a special preorder, they could plug that link from the
+					// discography itself when people are looking at it.
+					//
+					// This is a map from a MID to the sales data.
+					buyAlbums: {
+						"/m/0spgkk7": { // Chemical Playschool 15...
+							price: "12 €",
+							// ...is avaiable for pre-order
+							link: "http://www.rustblade.com/2012/chemical-playschool-15/"
+						} 
+						/* , { ... }, { ... } etc... */
+					}
 				});	
 			});	
 			</script>
@@ -143,16 +166,25 @@
 	</head>
 	<body>
 	
-	<h2>Albums by The Legendary Pink Dots</h2>
-	
-	<!-- 
-	This is the placeholder, which is where albumist will place the table of
-	albums in the page using the script above.  You can put whatever HTML
-	you want in it as a placeholder.
-	-->
-	<div id="discography">
-		<p><b><i>Loading...</i></b></p>
-	</div>
+		<div id="main" style="text-align: center;">
+			<h2>Albums by The Legendary Pink Dots</h2>
+			<p>This layout dynamically generated by the
+			<a href="http://albumist.hostilefork.com" target="_blank">Albumist</a>
+			jQuery plug-in widget</p>
+			<p>Using open licensed data from
+			<a href="http://musicbrainz.org" target="_blank">MusicBrainz</a> and
+			<a href="http://freebase.com" target="_blank">Freebase</a>
+			</p>
+			
+			<!-- 
+			This is the placeholder, which is where albumist will place the table of
+			albums in the page using the script above.  You can put whatever HTML
+			you want in it as a placeholder.
+			-->
+			<div id="discography">
+				<p><b><i>Loading...</i></b></p>
+			</div>
+		</div>
 	
 	</body>
 </html>

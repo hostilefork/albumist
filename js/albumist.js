@@ -60,7 +60,7 @@ var Albumist = {};
 	//
 	// Basic structure borrowed from:
 	//
-	// https://github.com/bgrins/AlbumistTextareas
+	// http://bgrins.github.io/ExpandingTextareas/
 
 (function(factory) {
 	// Add jQuery via AMD registration or browser globals
@@ -146,21 +146,6 @@ var Albumist = {};
 			return minutes + ":" + seconds;
 		},
 
-	 	// Helper function for matching arrays the user has specified which are 
-	 	// supposed to specify objects for certain Freebase ids or mids
-		matchEntryByFreebaseIdOrMid: function(id, mid, entryList) {
-			if (!entryList) {
-				return null;
-			}
-			for (var entryIndex = 0; entryIndex < entryList.length; entryIndex++) {
-				var entry = entryList[entryIndex];
-				if ((entry.id && (entry.id == id)) || (entry.mid && (entry.mid == mid))) {
-					return entry;
-				}
-			} 
-			return null;
-		},
-
 	};
 
 
@@ -189,11 +174,11 @@ var Albumist = {};
 		this.$div = $div;
 
 		// can't specify both id AND bandName
-		if (opts.bandName && opts.bandId) {
+		if (opts.bandName && opts.bandMid) {
 			throw Error("Albumist: can't specify both a band name and ID in config");
 		}
 		this.bandName = opts.bandName;
-		this.bandId = opts.bandId;
+		this.bandMid = opts.bandMid;
 
 		this.thumbEdgeSize = opts.thumbEdgeSize;
 		this.coverEdgeSize = opts.coverEdgeSize;
@@ -267,13 +252,11 @@ var Albumist = {};
 			var albumIndex = 0;
 			$.each(albumList, function(rawAlbumIndex, album) {
 
-				if (Freebase.matchEntryByFreebaseIdOrMid(
-					album.id, album.mid, this.omitAlbums
-				)) {
+				if ($.inArray(album.mid, instance.omitAlbums) > -1) {
 					return;
 				}
 				
-				instance.cache[album.id] = {};
+				instance.cache[album.mid] = {};
 				
 				var musicbrainzId = album.key.length ? album.key[0].value : null;
 
@@ -291,7 +274,7 @@ var Albumist = {};
 				var $pictureDiv = $('<div class="album-picture"></div>');
 
 				var $pictureLink = $("<a></a>", {
-					href: "http://www.freebase.com/view" + album.id,
+					href: "http://www.freebase.com/view" + album.mid,
 					target: "_blank"
 				});
 
@@ -307,9 +290,9 @@ var Albumist = {};
 
 				if (musicbrainzId === null) {
 					$thumbImg.attr("src", unavailableLink);
-					instance.cache[album.id].musicbrainzId = null;
+					instance.cache[album.mid].musicbrainzId = null;
 				} else {
-					instance.cache[album.id].musicbrainzId = musicbrainzId;
+					instance.cache[album.mid].musicbrainzId = musicbrainzId;
 
 				 	// http://api.jquery.com/error/
 					$thumbImg.error(function() {
@@ -339,7 +322,7 @@ var Albumist = {};
 				   		if (album["/common/topic/image"].length > 0) {
 					  		$thumbImg.attr("src",
 						   		'https://www.googleapis.com/freebase/v1/image' +
-						   		album["/common/topic/image"][0].id +
+						   		album["/common/topic/image"][0].mid +
 						   		'?maxwidth=' + 2000 + 
 						   		'&maxheight=' + 2000
 					   		);
@@ -348,7 +331,7 @@ var Albumist = {};
 				}
 				
 				var albumClickedListener = function(event) {
-					instance.openAlbumDetails.call(instance, album.id);
+					instance.openAlbumDetails.call(instance, album.mid);
 				
 					return false; // signal do NOT open window to freebase...
 				};
@@ -362,7 +345,7 @@ var Albumist = {};
 				var $titleDiv = $('<div class="album-title"></div>');
 
 				var $titleLink = $("<div>" + album.name + "</div>", {
-					href: "http://www.freebase.com/view" + album.id,
+					href: "http://www.freebase.com/view" + album.mid,
 					target: "_blank"
 				});
 				$titleDiv.append($titleLink);
@@ -370,9 +353,7 @@ var Albumist = {};
 				
 				$titleLink.click(albumClickedListener);
 
-				var buyInfo = Freebase.matchEntryByFreebaseIdOrMid(
-					album.id, album.mid, instance.buyAlbums
-				);
+				var buyInfo = instance.buyAlbums[album.mid];
 				if (buyInfo) {
 					var $priceDiv = $('<div class="album-price"></div>');
 					$priceDiv.html(
@@ -397,12 +378,12 @@ var Albumist = {};
 			
 			// In the query, fields that are filled in are used for matching.
 			// Fields that are left null represent the values we want filled in
-			// Note that only one of bandName or bandId can be null, and we
+			// Note that only one of bandName or bandMid can be null, and we
 			// will thus be requesting to retrieve the null one in result
 			var query = {
 				type: "/music/artist",
 				name: this.bandName,
-				id: this.bandId,
+				mid: this.bandMid,
 				
 				// An array containing patterns with null indicates we're
 				// looking for a potential array of matches, each one filled
@@ -411,7 +392,7 @@ var Albumist = {};
 				// matching albums in the album field of the result.
 				album: [{
 					"/common/topic/image" : [{
-						id: null,
+						mid: null,
 						optional: true
 					}],
 					key: [{
@@ -419,7 +400,6 @@ var Albumist = {};
 						value: null
 					}],
 					
-					id: null,
 					mid: null,
 					name: null,
 					release_date: null,
@@ -441,7 +421,7 @@ var Albumist = {};
 				if (!result || !result.album) {
 					instance.$div.html(
 						"<b><i>Unknown band: " + 
-						this.bandName ? this.bandName : this.bandId 
+						this.bandName ? this.bandName : this.bandMid 
 						+ "</i></b>"
 					);
 				} else {
@@ -450,7 +430,7 @@ var Albumist = {};
 					// it's actually an array of album data.  Also have the
 					// canonized ID but we don't currently use it for anything
 
-					var bandURL = "http://www.freebase.com/view" + result.id;
+					var bandURL = "http://www.freebase.com/view" + result.mid;
 
 					instance._buildAlbumTable.call(instance, result.album);
 				}
@@ -490,7 +470,7 @@ var Albumist = {};
 				width: this.coverEdgeSize,
 				height: this.coverEdgeSize
 			});
-			if (this.cache[album.id].musicbrainzId) {
+			if (this.cache[album.mid].musicbrainzId) {
 			 	// http://api.jquery.com/error/
 				$coverImg.error(function() {
 					// just because there's a MusicBrainz ID doesn't mean
@@ -501,7 +481,7 @@ var Albumist = {};
 				}); 
 				$coverImg.attr("src",
 					'http://coverartarchive.org/release-group/' +
-					this.cache[album.id].musicbrainzId + '/front'
+					this.cache[album.mid].musicbrainzId + '/front'
 				);
 			} else {
 				$coverImg.attr("src", unavailableLink);
@@ -511,11 +491,9 @@ var Albumist = {};
 			var $linksDiv = $("<div></div>");
 
 			// There was a visit Freebase URL link but it was taking up space
-			/* var freebaseUrl = 'http://freebase.com/view' + album.id; */
+			/* var freebaseUrl = 'http://freebase.com/view' + album.mid; */
 
-			var buyObject = Freebase.matchEntryByFreebaseIdOrMid(
-				album.id, album.mid, this.buyAlbums
-				);
+			var buyObject = this.buyAlbums[album.mid];
 			var buyHtml = "";
 			if (buyObject) {
 				buyHtml =
@@ -586,7 +564,7 @@ var Albumist = {};
 			});
 		},
 
-		openAlbumDetails: function(albumId) {
+		openAlbumDetails: function(albumMid) {
 
 			// We should probably create the modal box here and have a "Loading..."
 			// However SimpleModal is unable to dynamically size content, so
@@ -600,16 +578,15 @@ var Albumist = {};
 			// should some of these properties come from the config or this.cache?
 			var query = {
 				type: "/music/album",
-				id: albumId,
-				mid: null, // machine ID (basically like a GUID)
+				mid: albumMid, // machine ID (basically like a GUID)
 				name: null,
 				release_date: null,
 				artist: null,
 	            releases: [{
-	            	id: null,
+	            	mid: null,
 	            	release_date: null,
 	            	track_list: [{
-	            		id: null,
+	            		mid: null,
 	            		name: null,
 	            		track_number: null,
 	            		length: null
@@ -660,10 +637,7 @@ var Albumist = {};
 
 	$.albumist = $.extend({
 		// Global options for the behavior of the albumist plugin
-		injectCss: true,
-		basePath: "",
-		cssPath: null, // null means default to basePath + 'css/';
-		imagePath: null, // null means default to basePath + 'images/';
+		cssInjected: false,
 
 		// These are the per-instance options.  If there's a piece of state
 		// or a hook that might be different between one div and another
@@ -675,10 +649,27 @@ var Albumist = {};
 			omitAlbums: null,
 			buyAlbums: null,
 			bandName: null,
-			bandId: null
+			bandMid: null
 		}
 	}, $.albumist || {});
 
+	//
+	// GLOBAL FUNCTIONS
+	//
+
+	$.albumist.injectCss = function(cssPath) {
+		if (!cssPath) {
+			cssPath = "css/";
+		}
+
+		// Albumist modification: set styles here so that you don't have to
+		// touch the site's CSS if you're posting in a blog.  CSS cannot appear
+		// in the body of your document according to the W3C spec.
+		$('head').prepend($(
+			'<link type="text/css" rel="stylesheet" href="' + 
+			cssPath + 'albumist.css" media="screen">'
+		));
+	};
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -690,7 +681,7 @@ var Albumist = {};
 	// can initialize a new albumist discography on an element.
 	//
 
-	$.fn.albumist = function(o) {
+	$.fn.albumist = function(o, arg1) {
 
 		if (o === "destroy") {
 			this.each(function() {
@@ -700,12 +691,12 @@ var Albumist = {};
 			return this;
 		}
 
-		// Checks to see if any of the given DOM nodes have the
-		// expanding behaviour.
-		if (o === "active") {
-			return !!this.filter(function() {
-				return !!Albumist.getAlbumistInstance(this);
-			}).length;
+		// Injects the albumist CSS into the page header programmatically
+		// as scripts can appear in the body but CSS must be in the HEAD
+		if (o === "injectcss") {
+			var cssPath 
+			if (!arg1)
+			return this;
 		}
 
 		var opts = $.extend({ }, $.albumist.opts, o);
@@ -734,20 +725,7 @@ var Albumist = {};
 	//
 
 	$(function () {
-		if ($.albumist.injectCss) {
-			var cssPath = $.albumist.cssPath;
-			if (!cssPath) {
-				cssPath = $.albumist.basePath + "css/";
-			}
-
-			// Albumist modification: set styles here so that you don't have to
-			// touch the site's CSS if you're posting in a blog.  CSS cannot appear
-			// in the body of your document according to the W3C spec.
-			$('head').prepend($(
-				'<link type="text/css" rel="stylesheet" href="' + 
-				cssPath + 'albumist.css" media="screen">'
-			));
-		}
+		// nothing needed yet...
 	});
 
 
