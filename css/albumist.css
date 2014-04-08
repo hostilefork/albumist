@@ -44,17 +44,24 @@ div.container {
 	height: auto;
 }
 
+/*
+ * This is the right column in the pop-up with the album cover
+ */
 div.details {
-	display: block;
 	width: 300px;
 	float: right;
+	padding: 8px;
 }
 
+/*
+ * This is the left column in the pop-up with the track list
+ */
 div.tracks {
-	display: block;
 	width: 300px;
 	float: left;
+	padding: 8px;
 }
+
 
 /* default CSS for the modal dialog box */
 /* (from SimpleModal's "Basic.css" in the demos) */
@@ -66,7 +73,7 @@ div.tracks {
 
 /* Container */
 #simplemodal-container {
-	height: 100%;
+	height: auto;
 	width: auto;
 	color: #bbb;
 	background-color: #333;
@@ -74,9 +81,13 @@ div.tracks {
 	padding: 12px;
 }
 
+/*
+ * The data portion of the container is hidden by the SimpleModal box when
+ * it does its width calculation.  Consequently, you cannot add padding
+ * or margin to it because that will throw off the outerWidth calculation.
+ * If you need margin or padding, add it elsewhere!
+ */
 #simplemodal-container .simplemodal-data {
-	padding:8px;
-	height: 100%;
 	overflow-y: hidden;
 }
 
@@ -94,7 +105,9 @@ div.tracks {
 	color: #ddd;
 }
 
-/* changed the close X to a data URI to make the dependencies simpler */
+/*
+ * Changed the close X to a data URI to make the dependencies simpler
+ */
 #simplemodal-container a.modalCloseImg {
 	background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAAdCAYAAABfeMd1AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAA8xJREFUeNqclktIVFEYx+fO+GjUGqw0S/IRGtTKENtkqJTkooUwC0EQNNpEEiJYoISbKAhcCYogagvBlbRQW/kAIdAkbRGIi3RiNIfJR+qk4zxO/2/4zu3cOw+tA7+5c8/j+5/vfN8592hCCMspSy4o4acXLIHVU40kkQTkglfgm4hd3KAb3PxfESf4KU5XAuBRPA0tznINgCa1Yn193bK0tBR5ZmVlWUpKSiyFhYXmcfPgiaZpn0/yZEKd4vLysqioqKCZRAEhMTc3Z/bqy0nL9Uzt3dXVJex2e0wBic1mEx0dHcLv96tDX8cTyVN7tbW1JTRupr6+3uzR7Vgib2Tr5ORklJHa2lrDe0FBgVhcXDTUDw8PqyIfY4m4ZGt5ebnB4OrqaqS+srJSj8XOzk6kbnBwUO9XVFQkgsGgKmTTRQ4PD/NlrcvlivKis7Mz0kZiJBRLQDI7O/s3rwOBu7oI1B/KhrGxsaiBtDTSsCyxBIj+/n69D+w+Jg0r/YTD4Wy5fF6vNyoD19bWLENDQ4b3pqammBtPHQ+diF0rNo4GxT3Z4HA4ogbSxmtsbNTf4ZnhXS1Ief1/KBQ6og0f2fXIkuJ4MVGDLBOACtVRW6KYuN3ue7oISIc3btmoDp6enjYYbWlp0Y3Qf1UAx40hu0pLSx0yJPRz1uPxvJONo6OjhswiAZm+BBlX3yU9PT26gM/no/PrHLDpIr29vQ/U7GloaDBk10k7vrq62uDF+Pg4ZYbDIAKuzc/PD8hOdBbRUXGaI6Wmpkbs7+/rAltbW19RX2wWSQd54A6WzaV6REcFjvSYxikGtESqBwcHB7vt7e30bSngyVtl4M+AHHCrubn5+cbGxqb5tFtYWBB9fX2iu7s78pyZmYn6ciF2e62trS9hpwxcAWlqdqWA8+A6uA+ejoyMfBL/UFZWVjbr6ureYmwNuAEugtSIff4y0rpl8CWhFDjBC6fT+R4BdB8dHYXiGZ+amvJgY35A/3ZQB+iIv8pLlaR/frHpad2S2b1McJk75vPzUlVVVV5ZWdmF5ORkGw6+EL6YvyYmJlyIxyba3eA7swG2gQ8E6NSSIhoHKIWTgISyWSyH/2fyJMjrMPgNdvl6REI/gAfsgANwTCcLJYh+kWAhGwulcfplcqwyeWPZuQ8NpnNpn41uM3vsAQkEOQuNtxWTUCp7lcHPNK6zsifH7I2PZ+5j4QBPIhz3SqQsXRLHKZVFU/hd4xkGWcjPT7k8IelBwnsXC0kxK3tn4/9SJKwYDTPCLJDocmcWlPtJUy86isGERv4IMACaz3RmXeGcqwAAAABJRU5ErkJggg==) no-repeat;
 	width: 25px;
