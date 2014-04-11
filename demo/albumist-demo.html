@@ -5,7 +5,8 @@
 <!--[if IE 8]>    <html lang="en" class="ie lt-ie9"> <![endif]-->
 <!--[if gt IE 8]> <html lang="en" class="ie"> <![endif]-->
 <html lang="en">
-<meta charset="utf-8"> 
+	<head>
+		<meta charset="utf-8"> 
 
 <!--
 
@@ -44,8 +45,7 @@
 	I'd hope that people help make Albumist even more flexible in the future,
 	so there will be even more options!
 	-->
-	
-	<head>
+
 		<title>Albumist Widget Demo Page</title>
 
 		<!-- jQuery library, Google-hosted version -->
@@ -60,16 +60,16 @@
 		should be able to hook to do whatever you want when the album is
 		clicked.  For now, it brings up a modal dialog box.
 		-->
-		<script type="text/javascript" src="jquery.simplemodal/jquery.simplemodal.js"> </script>
+		<script type="text/javascript" src="../jquery.simplemodal/jquery.simplemodal.js"> </script>
 		
 		<!--
 		Stylesheet needed for albumist, see the albumist.css file for notes
 		on what you can override and what purposes they serve.
 		-->
-		<link rel="stylesheet" type="text/css" href="css/albumist.css">
+		<link rel="stylesheet" type="text/css" href="../albumist.css">
 
 		<!-- Albumist JavaScript code -->
-		<script type="text/javascript" src="js/albumist.js"> </script>
+		<script type="text/javascript" src="../albumist.js"> </script>
 
 		<!-- Initialization (your page likely already has a place for this) -->
 		<script type="text/javascript">
@@ -85,10 +85,9 @@
 				// you can only put CSS code in the header.  It's not an ideal
 				// solution to use code to add the CSS, but if you are stuck
 				// in that position albumist can do it.  Just pass it the
-				// page-relative path or an absolute path, if you don't
-				// supply one it assumes "css/albumist.css"
+				// page-relative path or an absolute path
 
-				/* $.albumist.injectCss("css/albumist.css"); */
+				/* $.albumist.injectCss("../albumist.css"); */
 
 				//
 				// Now select the DIV with ID "discography" and turn it to an

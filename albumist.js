@@ -658,16 +658,12 @@ var Albumist = {};
 	//
 
 	$.albumist.injectCss = function(cssPath) {
-		if (!cssPath) {
-			cssPath = "css/";
-		}
-
 		// Albumist modification: set styles here so that you don't have to
 		// touch the site's CSS if you're posting in a blog.  CSS cannot appear
 		// in the body of your document according to the W3C spec.
 		$('head').prepend($(
 			'<link type="text/css" rel="stylesheet" href="' + 
-			cssPath + 'albumist.css" media="screen">'
+			cssPath + '" media="screen">'
 		));
 	};
 
