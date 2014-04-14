@@ -476,11 +476,9 @@
 			});
 
 			// Create HTML elements to display the album name and year.				
-			var $albumTitleEl = $("<h2></h2>");
 			var year = Freebase.getYear(release.release_date);
 			var text = album.name + (year?(" ["+year+"]"):""); // name+year
-			$albumTitleEl.text(text);
-			$headingEl.append($albumTitleEl);
+			$headingEl.text(text);
 			$tracksDiv.append($headingEl);
 
 			var $tracksOl = $("<ol></ol>", {
