@@ -1,54 +1,14 @@
 //
 // albumist.js
-// Copyright (C) 2008 HostileFork.com
+// jQuery plugin for a MusicBrainz/Freebase powered discography widget
+// Copyright (C) 2008-2014 HostileFork.com
 //
-// This script was released September 24th 2008, and was more or less my
-// first JavaScript program.  It was written to be embedded in a Joomla 1.5
-// website, which used mootools.  
+// Creative Commons Attribution-ShareAlike 4.0 International Public License
+// See LICENSE.TXT for details
 //
-// It was initially conceived as a tool which could help the
-// Legendary Pink Dots manage their large discography on their website:
-//
-// http://en.wikipedia.org/wiki/The_Legendary_Pink_Dots
-//
-// The goal was to let fans use publicly-editable databases.  The most
-// structured and advanced one with an API I knew of at the time was Freebase,
-// which was synchronized to MusicBrainz but had a more flexible graph API
-// and decent editing facilities for a Wikipedia-like experience.  I also
-// added LyricWiki support in the "mash up" to drill down into song lyrics
-// if they were available.
-//
-// That was 6 years ago, today it's 2014.  In the meantime:
-//
-// * Joomla has undergone many versions and now deprecates mootools for jQuery
-//
-// * Freebase was acquired by Google and now won't allow adding new cover art
-//   (and has seemingly abandoned the user-friendly editing DB to be a
-//    somewhat internal tool)
-//
-// * LyricWiki somehow decided that even a band that is willing to have their
-//   lyrics offered on a wiki that a blanket agreement with record labels to
-//   offer only excerpts for independent artists is okay-by-them
-//
-// Not super-optimism-inducing for the future.  Thanks everyone!  I'll go play
-// "The Hardest Part" by Coldplay a few times now...
-//
-// But on a less depressing note, I've picked up some jQuery, and the
-// MusicBrainz project has been collaborating with the Internet Archive to
-// curate freely available cover art.  The skeletal work to use that is now
-// in place, and I also ripped out mootools to try and throw some jQuery
-// and better web-fu into my "I didn't know anything about this stuff" first
-// attempt.
-//
-// In any case, just mentioning my ire as I push some hodgepodge code into the
-// repository in the hopes of getting it updated and back on the website.
-//
-// Project Homepage: http://albumist.hostilefork.com
+// For more project information, see http://albumist.hostilefork.com
 //
 
-// Main namespace, see http://userjs.org/help/tutorials/avoiding-conflicts
-// REVIEW: new practice as a jQuery plugin would not be to have this
-var Albumist = {};
 
 // Whole-script strict mode syntax
 "use strict";
@@ -105,17 +65,17 @@ var Albumist = {};
 
 			$.ajax({
 			   type: 'GET',
-			    url: url,
-			    async: false,
-			    jsonpCallback: 'jsonCallback',
-			    contentType: "application/json",
-			    dataType: 'jsonp',
-			    success: function(json) {
-			       f(json.result);
-			    },
-			    error: function(e) {
-			       _warn("Albumist: query failure to Freebase");
-			    }
+				url: url,
+				async: false,
+				jsonpCallback: 'jsonCallback',
+				contentType: "application/json",
+				dataType: 'jsonp',
+				success: function(json) {
+				   f(json.result);
+				},
+				error: function(e) {
+				   _warn("Albumist: query failure to Freebase");
+				}
 			});	
 		},
 		
@@ -294,7 +254,7 @@ var Albumist = {};
 				} else {
 					instance.cache[album.mid].musicbrainzId = musicbrainzId;
 
-				 	// http://api.jquery.com/error/
+					// http://api.jquery.com/error/
 					$thumbImg.error(function() {
 						// just because there's a MusicBrainz ID doesn't mean
 						// there's artwork.  If we queried MusicBrainz directly
@@ -304,12 +264,12 @@ var Albumist = {};
 					}); 
 
 					if (true) {
-				   		$thumbImg.attr("src",
-				   			'http://coverartarchive.org/release-group/' + 
-				   			musicbrainzId + 
-				   			'/front-250'
-			   			);
-				   	} else {
+						$thumbImg.attr("src",
+							'http://coverartarchive.org/release-group/' + 
+							musicbrainzId + 
+							'/front-250'
+						);
+					} else {
 						// Freebase image links for old album covers still work,
 						// but they are no longer accepting new covers.  They
 						// have also disabled the image thumbnail services
@@ -319,15 +279,15 @@ var Albumist = {};
 						// cover art anymore, but this sort of works for the
 						// old art at last check.
 
-				   		if (album["/common/topic/image"].length > 0) {
-					  		$thumbImg.attr("src",
-						   		'https://www.googleapis.com/freebase/v1/image' +
-						   		album["/common/topic/image"][0].mid +
-						   		'?maxwidth=' + 2000 + 
-						   		'&maxheight=' + 2000
-					   		);
-					  	}
-				   	}
+						if (album["/common/topic/image"].length > 0) {
+							$thumbImg.attr("src",
+								'https://www.googleapis.com/freebase/v1/image' +
+								album["/common/topic/image"][0].mid +
+								'?maxwidth=' + 2000 + 
+								'&maxheight=' + 2000
+							);
+						}
+					}
 				}
 				
 				var albumClickedListener = function(event) {
@@ -365,7 +325,7 @@ var Albumist = {};
 				
 				$column.append($albumDiv);
 				
-			 	albumIndex++;
+				albumIndex++;
 			});
 
 			this.$div.append($table);
@@ -453,8 +413,8 @@ var Albumist = {};
 			// We currently just take the first release in the array
 			// (should probably at least mention/hyperlink the other releases
 			// if there are any, or make a tab for each?)
-            var release = releaseList[0];
-            var trackList = release.track_list;
+			var release = releaseList[0];
+			var trackList = release.track_list;
 			
 			var $containerDiv = $('<div class="container">');
 
@@ -471,7 +431,7 @@ var Albumist = {};
 				height: this.coverEdgeSize
 			});
 			if (this.cache[album.mid].musicbrainzId) {
-			 	// http://api.jquery.com/error/
+				// http://api.jquery.com/error/
 				$coverImg.error(function() {
 					// just because there's a MusicBrainz ID doesn't mean
 					// there's artwork.  If we queried MusicBrainz directly
@@ -582,16 +542,16 @@ var Albumist = {};
 				name: null,
 				release_date: null,
 				artist: null,
-	            releases: [{
-	            	mid: null,
-	            	release_date: null,
-	            	track_list: [{
-	            		mid: null,
-	            		name: null,
-	            		track_number: null,
-	            		length: null
-	            	}]
-	           	}],
+				releases: [{
+					mid: null,
+					release_date: null,
+					track_list: [{
+						mid: null,
+						name: null,
+						track_number: null,
+						length: null
+					}]
+				}],
 			};
 			
 			var instance = this;
