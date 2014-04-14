@@ -201,10 +201,9 @@
 			$table.append($tbody);
 
 			// We want each column in the table to be the result of rounding
-			// down the total width divided by albums per row
-			// REVIEW: if the width changes, we may want to relayout for
-			// dynamically sizing the discography, not currently supported
-			var colWidth = Math.floor(this.$div.width()/this.albumsPerRow);
+			// down the total width divided by albums per row.  Do width by
+			// percentage so if the div is resized the columns will resize
+			var colWidth = "" + Math.floor(100/this.albumsPerRow) + "%";
 
 			var $row = null;
 			// Loop through the albums, but we may omit some from the list; so
