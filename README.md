@@ -6,7 +6,7 @@ The idea was to give bands an easy way to offer an interactive discography on th
 
 More information about the project is available at [http://albumist.hostilefork.com](http://albumist.hostilefork.com)
 
-### USAGE
+# USAGE
 
 As with most jQuery plugins, you will need to create DIVs on your page where the widget will reside.  The CSS or style information should encode the width you want the widget to be:
 
@@ -45,7 +45,7 @@ Next, you invoke the `.albumist({...options...});` method on a jQuery selector f
 
 For a full description of the available options, see the comments in the demonstration HTML file [albumist-demo.html](https://github.com/hostilefork/albumist/blob/master/demo/albumist-demo.html).
 
-### LICENSE
+# LICENSE
 
 Creative Commons Licenses aren't exactly ideal for software projects.  But when Albumist was created in 2008, I felt it important that musicians who might be interested in the project be exposed to the *existence* of [Creative Commons](https://creativecommons.org/about).  It was an opportunity to bring up the talking point.
 
