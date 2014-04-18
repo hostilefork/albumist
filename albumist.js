@@ -10,10 +10,6 @@
 //
 
 
-// Whole-script strict mode syntax
-"use strict";
-
-
 ////////////////////////////////////////////////////////////////////////////////
 
 	// REQUIREJS AND MODULE PATTERN FOR WIDGET
@@ -30,6 +26,10 @@
 		factory(jQuery);
 	}
 }(function ($) {
+
+	// http://stackoverflow.com/questions/1335851/
+	// http://stackoverflow.com/questions/4462478/
+	"use strict";
 
 	// We don't want to throw up alert boxes, but we want to know when
 	// problems happen in the console for developers to debug
